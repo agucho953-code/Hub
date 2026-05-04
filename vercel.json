@@ -2,36 +2,8 @@
   "$schema": "https://openapi.vercel.sh/vercel.json",
   "crons": [
     {
-      "path": "/api/cron/finish-past-events",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/sync-templates",
-      "schedule": "0 */6 * * *"
-    },
-    {
-      "path": "/api/cron/process-broadcasts",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/cron/process-jobs",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/cron/process-flows",
-      "schedule": "* * * * *"
-    },
-    {
-      "path": "/api/cron/evaluate-time-flows?type=customer_inactive,birthday",
-      "schedule": "0 9 * * *"
-    },
-    {
-      "path": "/api/cron/evaluate-time-flows?type=event_starting",
-      "schedule": "0 * * * *"
-    },
-    {
-      "path": "/api/cron/refresh-stats",
-      "schedule": "0 7 * * *"
+      "path": "/api/cron/mi-tarea",
+      "schedule": "0 12 * * *"
     }
   ]
 }

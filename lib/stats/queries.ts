@@ -85,36 +85,12 @@ export async function getTopCustomersBySpent(
   const { data } = await supabase
     .from('v_customer_stats')
     .select(
-      'customer_id, total_visits, total_spent_cents, avg_ticket_cents, last_visit_at, favorite_item_name, customer:customers!inner(first_name, last_name)',
+      'customer_id, first_name, last_name, total_visits, total_spent_cents, avg_ticket_cents, last_visit_at, favorite_item_name',
     )
     .eq('tenant_id', tenantId)
     .order('total_spent_cents', { ascending: false })
     .limit(limit)
-  type Joined = {
-    customer_id: string
-    total_visits: number
-    total_spent_cents: number
-    avg_ticket_cents: number
-    last_visit_at: string | null
-    favorite_item_name: string | null
-    customer:
-      | { first_name: string; last_name: string }
-      | { first_name: string; last_name: string }[]
-      | null
-  }
-  return ((data ?? []) as unknown as Joined[]).map((row) => {
-    const c = Array.isArray(row.customer) ? row.customer[0] : row.customer
-    return {
-      customer_id: row.customer_id,
-      first_name: c?.first_name ?? '',
-      last_name: c?.last_name ?? '',
-      total_visits: row.total_visits,
-      total_spent_cents: row.total_spent_cents,
-      avg_ticket_cents: row.avg_ticket_cents,
-      last_visit_at: row.last_visit_at,
-      favorite_item_name: row.favorite_item_name,
-    }
-  })
+  return (data ?? []) as TopCustomerRow[]
 }
 
 export type ChurnRiskRow = {
@@ -134,31 +110,12 @@ export async function getChurnRisk(tenantId: string, limit = 200): Promise<Churn
   const { data } = await supabase
     .from('v_churn_risk')
     .select(
-      'customer_id, total_visits, visit_frequency_days, days_since_last_visit, last_visit_at, total_spent_cents, customer:customers!inner(first_name, last_name, phone)',
+      'customer_id, first_name, last_name, phone, total_visits, visit_frequency_days, days_since_last_visit, last_visit_at, total_spent_cents',
     )
     .eq('tenant_id', tenantId)
     .order('total_spent_cents', { ascending: false })
     .limit(limit)
-  type Joined = Omit<ChurnRiskRow, 'first_name' | 'last_name' | 'phone'> & {
-    customer:
-      | { first_name: string; last_name: string; phone: string }
-      | { first_name: string; last_name: string; phone: string }[]
-      | null
-  }
-  return ((data ?? []) as unknown as Joined[]).map((row) => {
-    const c = Array.isArray(row.customer) ? row.customer[0] : row.customer
-    return {
-      customer_id: row.customer_id,
-      first_name: c?.first_name ?? '',
-      last_name: c?.last_name ?? '',
-      phone: c?.phone ?? '',
-      total_visits: row.total_visits,
-      visit_frequency_days: row.visit_frequency_days,
-      days_since_last_visit: row.days_since_last_visit,
-      last_visit_at: row.last_visit_at,
-      total_spent_cents: row.total_spent_cents,
-    }
-  })
+  return (data ?? []) as ChurnRiskRow[]
 }
 
 export async function getCustomerInsights(tenantId: string, customerId: string) {

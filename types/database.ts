@@ -768,6 +768,9 @@ export type Database = {
         Row: {
           customer_id: string
           tenant_id: string
+          first_name: string
+          last_name: string
+          phone: string
           total_visits: number
           total_spent_cents: number
           avg_ticket_cents: number
@@ -805,6 +808,9 @@ export type Database = {
         Row: {
           tenant_id: string
           customer_id: string
+          first_name: string
+          last_name: string
+          phone: string
           total_visits: number
           visit_frequency_days: number
           days_since_last_visit: number
