@@ -22,12 +22,20 @@ export async function getCurrentUser() {
 
 export async function getMembershipsForUser(): Promise<MembershipWithTenant[]> {
   const supabase = await createClient()
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
+  if (!user) return []
+
   const { data, error } = await supabase
     .from('memberships')
     .select('role, tenant:tenants(id, name, slug, logo_url)')
     .order('created_at', { ascending: true })
 
-  if (error) throw error
+  if (error) {
+    console.error('[tenant.getMemberships]', error.code, error.message)
+    return []
+  }
   if (!data) return []
 
   const result: MembershipWithTenant[] = []
@@ -57,7 +65,11 @@ export async function getActiveTenant(): Promise<{
     .eq('tenant_id', claim)
     .maybeSingle()
 
-  if (error || !data) return null
+  if (error) {
+    console.error('[tenant.getActiveTenant]', error.code, error.message)
+    return null
+  }
+  if (!data) return null
   const raw = data as unknown as { role: TenantRole; tenant: Tenant | Tenant[] | null }
   const tenant = Array.isArray(raw.tenant) ? raw.tenant[0] : raw.tenant
   if (!tenant) return null
