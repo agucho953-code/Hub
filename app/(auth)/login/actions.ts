@@ -36,7 +36,17 @@ export async function sendMagicLink(_prev: LoginState, formData: FormData): Prom
   })
 
   if (error) {
-    return { status: 'error', message: 'No pudimos enviar el enlace. Probá de nuevo.' }
+    const status = (error as { status?: number }).status
+    const code = (error as { code?: string }).code
+    if (status === 429 || code === 'over_email_send_rate_limit') {
+      return {
+        status: 'error',
+        message:
+          'Alcanzaste el límite de envíos de email del servidor SMTP por defecto. Esperá unos minutos antes de pedir otro enlace, o configurá un SMTP propio en Supabase Auth → Email.',
+      }
+    }
+    console.error('[login.sendMagicLink]', { status, code, message: error.message })
+    return { status: 'error', message: 'No pudimos enviar el enlace. Probá de nuevo en un rato.' }
   }
 
   return { status: 'success', message: 'Te mandamos un enlace por email.' }
