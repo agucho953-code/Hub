@@ -1,0 +1,1 @@
+-- Seed local. F0: vacío.
