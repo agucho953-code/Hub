@@ -1,16 +1,20 @@
+import { ArrowDownToLine, Banknote, Receipt, Sparkles, Users } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRoot,
+  DataTableScroll,
+  DataTableShell,
+} from '@/components/ui/data-table'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatCard } from '@/components/ui/stat-card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   getChurnRisk,
@@ -31,12 +35,16 @@ import { ChurnCard } from './_components/churn-card'
 import { Heatmap } from './_components/heatmap'
 import { RevenueChart } from './_components/revenue-chart'
 
-export const metadata = { title: 'Estadísticas — HUB' }
+export const metadata = { title: 'Estadísticas' }
 export const dynamic = 'force-dynamic'
 
 function fmtCents(cents: number): string {
   return `$${(cents / 100).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`
 }
+
+const numberFmt = new Intl.NumberFormat('es-AR')
+
+const TAB_CLASS = 'data-[state=active]:bg-card data-[state=active]:shadow-sm'
 
 export default async function EstadisticasPage({
   params,
@@ -64,30 +72,75 @@ export default async function EstadisticasPage({
     getCommunicationStats(access.tenant.id),
   ])
 
-  return (
-    <main className="mx-auto w-full max-w-6xl space-y-6 p-4">
-      <h1 className="text-2xl font-semibold">Estadísticas</h1>
+  const totalRevenue = daily90.reduce((acc, d) => acc + Number(d.revenue_cents ?? 0), 0)
 
-      <Tabs defaultValue="overview" className="space-y-4">
-        <TabsList>
-          <TabsTrigger value="overview">Visión general</TabsTrigger>
-          <TabsTrigger value="customers">Clientes</TabsTrigger>
-          <TabsTrigger value="events">Eventos</TabsTrigger>
-          <TabsTrigger value="comms">Comunicación</TabsTrigger>
+  return (
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Análisis"
+        title="Estadísticas"
+        description="Vista profunda de tu bar: clientes, visitas, eventos y comunicaciones."
+      />
+
+      <Tabs defaultValue="overview" className="space-y-6">
+        <TabsList className="bg-secondary/40">
+          <TabsTrigger value="overview" className={TAB_CLASS}>
+            Visión general
+          </TabsTrigger>
+          <TabsTrigger value="customers" className={TAB_CLASS}>
+            Clientes
+          </TabsTrigger>
+          <TabsTrigger value="events" className={TAB_CLASS}>
+            Eventos
+          </TabsTrigger>
+          <TabsTrigger value="comms" className={TAB_CLASS}>
+            Comunicación
+          </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="overview" className="space-y-4">
-          <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Kpi label="Clientes" value={kpis.customers_total.toLocaleString('es-AR')} />
-            <Kpi label="Activos 30d" value={kpis.customers_active_30d.toLocaleString('es-AR')} />
-            <Kpi label="Visitas 30d" value={kpis.visits_30d.toLocaleString('es-AR')} />
-            <Kpi label="Ticket promedio" value={fmtCents(kpis.avg_ticket_30d_cents)} />
+        <TabsContent value="overview" className="space-y-6">
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              icon={Users}
+              label="Clientes"
+              value={numberFmt.format(kpis.customers_total)}
+            />
+            <StatCard
+              icon={Sparkles}
+              label="Activos 30d"
+              value={numberFmt.format(kpis.customers_active_30d)}
+              hint={
+                kpis.customers_total > 0
+                  ? `${Math.round((kpis.customers_active_30d / kpis.customers_total) * 100)}% del total`
+                  : undefined
+              }
+            />
+            <StatCard
+              icon={Receipt}
+              label="Visitas 30d"
+              value={numberFmt.format(kpis.visits_30d)}
+              hint={kpis.visits_30d > 0 ? `${(kpis.visits_30d / 30).toFixed(1)}/día` : undefined}
+            />
+            <StatCard
+              icon={Banknote}
+              label="Ticket promedio"
+              value={fmtCents(kpis.avg_ticket_30d_cents)}
+            />
           </section>
-          <Card>
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base">Revenue últimos 90 días</CardTitle>
-            </CardHeader>
-            <CardContent className="h-72">
+
+          <div className="card-hairline rounded-xl border bg-card">
+            <header className="flex items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
+              <div>
+                <h2 className="font-display text-base font-semibold tracking-tight">
+                  Revenue últimos 90 días
+                </h2>
+                <p className="text-xs text-muted-foreground">{fmtCents(totalRevenue)} acumulado</p>
+              </div>
+              <span className="rounded-full bg-secondary/60 px-2.5 py-1 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
+                90d
+              </span>
+            </header>
+            <div className="h-72 px-2 pb-4">
               <RevenueChart
                 data={daily90.map((d) => ({
                   day: d.day,
@@ -96,82 +149,89 @@ export default async function EstadisticasPage({
                 }))}
                 metric="revenue_cents"
               />
-            </CardContent>
-          </Card>
+            </div>
+          </div>
           <Heatmap data={heatmap} />
         </TabsContent>
 
-        <TabsContent value="customers" className="space-y-4">
-          <Card>
-            <CardHeader className="flex flex-row items-start justify-between gap-4">
+        <TabsContent value="customers" className="space-y-6">
+          <DataTableShell>
+            <header className="flex flex-wrap items-center justify-between gap-3 border-b border-border/60 px-5 py-4">
               <div>
-                <CardTitle className="text-base">Top 50 por gasto</CardTitle>
+                <h2 className="font-display text-base font-semibold tracking-tight">
+                  Top 50 por gasto
+                </h2>
                 <p className="text-xs text-muted-foreground">Clientes con más spent acumulado.</p>
               </div>
-              <Button asChild variant="outline" size="sm">
+              <Button asChild variant="outline" size="sm" className="gap-2">
                 <a
                   href={`/api/stats/export?slug=${encodeURIComponent(tenantSlug)}&type=top_customers`}
                   download
                 >
+                  <ArrowDownToLine className="size-3.5" />
                   Exportar CSV
                 </a>
               </Button>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Cliente</TableHead>
-                    <TableHead>Visitas</TableHead>
-                    <TableHead>Spent</TableHead>
-                    <TableHead>Ticket prom.</TableHead>
-                    <TableHead>Última visita</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {top.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="p-6 text-center text-sm text-muted-foreground"
-                      >
-                        Sin datos.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    top.map((c) => (
-                      <TableRow key={c.customer_id}>
-                        <TableCell>
+            </header>
+            {top.length === 0 ? (
+              <EmptyState
+                icon={Users}
+                title="Sin datos"
+                description="Cuando empieces a registrar visitas, vas a ver acá tu ranking de clientes."
+                className="m-3 border-0 bg-transparent"
+              />
+            ) : (
+              <DataTableScroll>
+                <DataTableRoot>
+                  <DataTableHead>
+                    <tr>
+                      <DataTableHeader>Cliente</DataTableHeader>
+                      <DataTableHeader>Visitas</DataTableHeader>
+                      <DataTableHeader>Spent</DataTableHeader>
+                      <DataTableHeader>Ticket prom.</DataTableHeader>
+                      <DataTableHeader>Última visita</DataTableHeader>
+                    </tr>
+                  </DataTableHead>
+                  <DataTableBody>
+                    {top.map((c) => (
+                      <tr key={c.customer_id} className="transition-colors hover:bg-secondary/40">
+                        <DataTableCell>
                           <Link
                             href={`/${tenantSlug}/clientes/${c.customer_id}`}
-                            className="font-medium hover:underline"
+                            className="font-medium hover:text-primary"
                           >
                             {c.first_name} {c.last_name}
                           </Link>
-                        </TableCell>
-                        <TableCell>{c.total_visits}</TableCell>
-                        <TableCell>{fmtCents(c.total_spent_cents)}</TableCell>
-                        <TableCell>{fmtCents(c.avg_ticket_cents)}</TableCell>
-                        <TableCell className="text-muted-foreground">
+                        </DataTableCell>
+                        <DataTableCell className="tabular-nums">{c.total_visits}</DataTableCell>
+                        <DataTableCell className="font-display font-semibold tabular-nums">
+                          {fmtCents(c.total_spent_cents)}
+                        </DataTableCell>
+                        <DataTableCell className="tabular-nums text-muted-foreground">
+                          {fmtCents(c.avg_ticket_cents)}
+                        </DataTableCell>
+                        <DataTableCell className="text-xs text-muted-foreground">
                           {c.last_visit_at
                             ? new Date(c.last_visit_at).toLocaleDateString('es-AR')
                             : '—'}
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                        </DataTableCell>
+                      </tr>
+                    ))}
+                  </DataTableBody>
+                </DataTableRoot>
+              </DataTableScroll>
+            )}
+          </DataTableShell>
 
           <ChurnCard rows={churn} tenantSlug={tenantSlug} />
+
           <div>
-            <Button asChild variant="outline" size="sm">
+            <Button asChild variant="outline" size="sm" className="gap-2">
               <a
                 href={`/api/stats/export?slug=${encodeURIComponent(tenantSlug)}&type=churn_risk`}
                 download
               >
+                <ArrowDownToLine className="size-3.5" />
                 Exportar churn CSV
               </a>
             </Button>
@@ -179,91 +239,117 @@ export default async function EstadisticasPage({
         </TabsContent>
 
         <TabsContent value="events" className="space-y-4">
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-base">Eventos por asistencia</CardTitle>
-            </CardHeader>
-            <CardContent className="p-0">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Evento</TableHead>
-                    <TableHead>Fecha</TableHead>
-                    <TableHead>Reservas</TableHead>
-                    <TableHead>Asistieron</TableHead>
-                    <TableHead>No-show rate</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {events.length === 0 ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={5}
-                        className="p-6 text-center text-sm text-muted-foreground"
-                      >
-                        Sin eventos.
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    events.map((e) => (
-                      <TableRow key={e.event_id}>
-                        <TableCell className="font-medium">{e.event_name}</TableCell>
-                        <TableCell className="text-muted-foreground">
+          <DataTableShell>
+            <header className="border-b border-border/60 px-5 py-4">
+              <h2 className="font-display text-base font-semibold tracking-tight">
+                Eventos por asistencia
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Últimos 20 eventos publicados o finalizados.
+              </p>
+            </header>
+            {events.length === 0 ? (
+              <EmptyState
+                icon={Receipt}
+                title="Sin eventos"
+                description="Cuando organices eventos, vas a ver acá su tasa de asistencia."
+                className="m-3 border-0 bg-transparent"
+              />
+            ) : (
+              <DataTableScroll>
+                <DataTableRoot>
+                  <DataTableHead>
+                    <tr>
+                      <DataTableHeader>Evento</DataTableHeader>
+                      <DataTableHeader>Fecha</DataTableHeader>
+                      <DataTableHeader>Reservas</DataTableHeader>
+                      <DataTableHeader>Asistieron</DataTableHeader>
+                      <DataTableHeader>No-show</DataTableHeader>
+                    </tr>
+                  </DataTableHead>
+                  <DataTableBody>
+                    {events.map((e) => (
+                      <tr key={e.event_id} className="transition-colors hover:bg-secondary/40">
+                        <DataTableCell className="font-medium">{e.event_name}</DataTableCell>
+                        <DataTableCell className="text-xs text-muted-foreground">
                           {new Date(e.starts_at).toLocaleDateString('es-AR')}
-                        </TableCell>
-                        <TableCell>{e.reservations}</TableCell>
-                        <TableCell>{e.attended}</TableCell>
-                        <TableCell>
+                        </DataTableCell>
+                        <DataTableCell className="tabular-nums">{e.reservations}</DataTableCell>
+                        <DataTableCell className="tabular-nums">{e.attended}</DataTableCell>
+                        <DataTableCell>
                           <Badge variant={e.no_show_rate > 0.2 ? 'destructive' : 'secondary'}>
                             {(e.no_show_rate * 100).toFixed(0)}%
                           </Badge>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-              </Table>
-            </CardContent>
-          </Card>
+                        </DataTableCell>
+                      </tr>
+                    ))}
+                  </DataTableBody>
+                </DataTableRoot>
+              </DataTableScroll>
+            )}
+          </DataTableShell>
         </TabsContent>
 
-        <TabsContent value="comms" className="space-y-4">
-          <section className="grid grid-cols-2 gap-4 md:grid-cols-4">
-            <Kpi label="Recipients" value={comms.total_recipients.toLocaleString('es-AR')} />
-            <Kpi label="Enviados" value={comms.sent.toLocaleString('es-AR')} />
-            <Kpi label="Entregados" value={comms.delivered.toLocaleString('es-AR')} />
-            <Kpi label="Leídos" value={comms.read.toLocaleString('es-AR')} />
+        <TabsContent value="comms" className="space-y-6">
+          <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            <StatCard
+              label="Recipients"
+              value={numberFmt.format(comms.total_recipients)}
+              hint="Total alcanzado"
+            />
+            <StatCard
+              label="Enviados"
+              value={numberFmt.format(comms.sent)}
+              hint={
+                comms.total_recipients > 0
+                  ? `${Math.round((comms.sent / comms.total_recipients) * 100)}% del total`
+                  : undefined
+              }
+            />
+            <StatCard
+              label="Entregados"
+              value={numberFmt.format(comms.delivered)}
+              hint={
+                comms.sent > 0
+                  ? `${Math.round((comms.delivered / comms.sent) * 100)}% delivery rate`
+                  : undefined
+              }
+            />
+            <StatCard
+              label="Leídos"
+              value={numberFmt.format(comms.read)}
+              hint={
+                comms.sent > 0
+                  ? `${((comms.read / comms.sent) * 100).toFixed(1)}% open (proxy)`
+                  : undefined
+              }
+              deltaTone={comms.failed > 0 ? 'negative' : 'muted'}
+            />
           </section>
-          <Card>
-            <CardContent className="space-y-1 p-4 text-sm">
-              <p>
-                <span className="font-medium">Open rate (proxy):</span>{' '}
-                {comms.sent > 0 ? `${((comms.read / comms.sent) * 100).toFixed(1)}%` : '—'}
-              </p>
-              <p>
-                <span className="font-medium">Reply rate:</span> —{' '}
-                <span className="text-xs text-muted-foreground">
-                  (asociación de replies a broadcasts no implementada en v1)
-                </span>
-              </p>
-              <p>
-                <span className="font-medium">Failed:</span> {comms.failed.toLocaleString('es-AR')}
-              </p>
-            </CardContent>
-          </Card>
+
+          <div className="card-hairline rounded-xl border bg-card p-5">
+            <h3 className="font-display text-sm font-semibold tracking-tight">Diagnóstico</h3>
+            <dl className="mt-3 grid gap-x-6 gap-y-2 text-sm sm:grid-cols-2">
+              <div className="flex justify-between border-b border-border/40 py-1.5">
+                <dt className="text-muted-foreground">Open rate (proxy)</dt>
+                <dd className="font-medium tabular-nums">
+                  {comms.sent > 0 ? `${((comms.read / comms.sent) * 100).toFixed(1)}%` : '—'}
+                </dd>
+              </div>
+              <div className="flex justify-between border-b border-border/40 py-1.5">
+                <dt className="text-muted-foreground">Reply rate</dt>
+                <dd className="text-xs text-muted-foreground">No implementado en v1</dd>
+              </div>
+              <div className="flex justify-between border-b border-border/40 py-1.5">
+                <dt className="text-muted-foreground">Failed</dt>
+                <dd className="font-medium tabular-nums text-destructive">
+                  {numberFmt.format(comms.failed)}
+                </dd>
+              </div>
+            </dl>
+          </div>
         </TabsContent>
       </Tabs>
-    </main>
-  )
-}
-
-function Kpi({ label, value }: { label: string; value: string }) {
-  return (
-    <Card>
-      <CardHeader className="pb-1">
-        <CardTitle className="text-xs font-normal text-muted-foreground">{label}</CardTitle>
-      </CardHeader>
-      <CardContent className="text-2xl font-semibold">{value}</CardContent>
-    </Card>
+    </div>
   )
 }

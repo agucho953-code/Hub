@@ -1,7 +1,9 @@
 'use client'
 
+import { Search } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -83,51 +85,63 @@ export function NewReservationDialog({
           <DialogTitle>Nueva reserva</DialogTitle>
         </DialogHeader>
 
-        <div className="space-y-3">
+        <div className="space-y-4">
           <div className="grid gap-1.5">
             <Label htmlFor="search-cust">Buscar cliente</Label>
-            <Input
-              id="search-cust"
-              value={query}
-              onChange={(e) => {
-                setQuery(e.target.value)
-                setPicked(null)
-              }}
-              placeholder="Nombre o teléfono…"
-              autoFocus
-            />
+            <label className="relative flex items-center">
+              <Search className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+              <input
+                id="search-cust"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value)
+                  setPicked(null)
+                }}
+                placeholder="Nombre o teléfono…"
+                // biome-ignore lint/a11y/noAutofocus: dialog operativo, foco inmediato en search
+                autoFocus
+                className="h-9 w-full rounded-lg border border-border/60 bg-background/40 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/40"
+              />
+            </label>
           </div>
 
           {!picked && results.length > 0 ? (
-            <ul className="max-h-48 divide-y overflow-y-auto rounded-md border">
-              {results.map((c) => (
-                <li key={c.id}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setPicked(c)
-                      setQuery(`${c.first_name} ${c.last_name}`)
-                      setResults([])
-                    }}
-                    className="flex w-full items-center justify-between px-3 py-2 text-left hover:bg-muted/50"
-                  >
-                    <span className="text-sm">
-                      <strong>
+            <ul className="max-h-48 divide-y divide-border/60 overflow-y-auto rounded-lg border border-border/60 bg-background/30">
+              {results.map((c) => {
+                const initials =
+                  `${c.first_name?.[0] ?? ''}${c.last_name?.[0] ?? ''}`.toUpperCase() || '?'
+                return (
+                  <li key={c.id}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setPicked(c)
+                        setQuery(`${c.first_name} ${c.last_name}`)
+                        setResults([])
+                      }}
+                      className="flex w-full items-center gap-2.5 px-3 py-2 text-left transition-colors hover:bg-secondary/40"
+                    >
+                      <Avatar className="size-7">
+                        <AvatarFallback className="bg-secondary text-[10px] font-semibold">
+                          {initials}
+                        </AvatarFallback>
+                      </Avatar>
+                      <span className="text-sm font-medium">
                         {c.first_name} {c.last_name}
-                      </strong>{' '}
-                      <span className="text-xs text-muted-foreground">
+                      </span>
+                      <span className="ml-auto font-mono text-[11px] text-muted-foreground">
                         {formatPhoneForDisplay(c.phone)}
                       </span>
-                    </span>
-                  </button>
-                </li>
-              ))}
+                    </button>
+                  </li>
+                )
+              })}
             </ul>
           ) : null}
 
           {picked ? (
-            <div className="rounded-md border bg-muted/40 p-2 text-sm">
-              Cliente:{' '}
+            <div className="flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/10 px-3 py-2 text-sm">
+              <span className="text-xs text-muted-foreground">Seleccionado:</span>
               <strong>
                 {picked.first_name} {picked.last_name}
               </strong>

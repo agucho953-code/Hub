@@ -15,13 +15,25 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import {
+  Clock,
+  GitBranch,
+  GripVertical,
+  MessageSquareText,
+  Plus,
+  Tag as TagIcon,
+  Workflow,
+  X,
+  Zap,
+} from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Checkbox } from '@/components/ui/checkbox'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -57,6 +69,13 @@ const STEP_LABEL: Record<FlowStepConfig['type'], string> = {
   wait: 'Esperar',
   condition: 'Condición',
   add_tag: 'Agregar tag',
+}
+
+const STEP_ICON: Record<FlowStepConfig['type'], typeof MessageSquareText> = {
+  send_template: MessageSquareText,
+  wait: Clock,
+  condition: GitBranch,
+  add_tag: TagIcon,
 }
 
 type WithRowId = FlowStepConfig & { __id: string }
@@ -131,55 +150,82 @@ export function FlowBuilder({
       <input type="hidden" name="steps" value={stepsJson} />
       <input type="hidden" name="active" value={active ? 'true' : 'false'} />
 
-      <Card>
-        <CardContent className="space-y-3 p-4">
+      <div className="card-hairline rounded-xl border bg-card p-5 space-y-4">
+        <div className="grid gap-1.5">
+          <Label
+            htmlFor="flow-name"
+            className="text-xs uppercase tracking-wider text-muted-foreground"
+          >
+            Nombre del flow
+          </Label>
           <Input
-            placeholder="Nombre del flow"
+            id="flow-name"
+            placeholder="Ej: Recordatorio post-visita"
             value={name}
             onChange={(e) => setName(e.target.value)}
             required
             maxLength={80}
           />
-          <TriggerEditor value={trigger} onChange={setTrigger} tags={tags} />
-          <label className="flex items-center gap-2 text-sm">
-            <input type="checkbox" checked={active} onChange={(e) => setActive(e.target.checked)} />
-            Activo
-          </label>
-        </CardContent>
-      </Card>
+        </div>
 
-      <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
-        <SortableContext items={steps.map((s) => s.__id)} strategy={verticalListSortingStrategy}>
-          <div className="space-y-2">
-            {steps.map((step, idx) => (
-              <SortableStep
-                key={step.__id}
-                id={step.__id}
-                index={idx}
-                step={step}
-                channels={channels}
-                templates={templates}
-                tags={tags}
-                onChange={(next) =>
-                  setSteps((arr) =>
-                    arr.map((s) => (s.__id === step.__id ? { ...next, __id: s.__id } : s)),
-                  )
-                }
-                onRemove={() =>
-                  setSteps((arr) =>
-                    arr.length > 1 ? arr.filter((s) => s.__id !== step.__id) : arr,
-                  )
-                }
-              />
-            ))}
+        <TriggerEditor value={trigger} onChange={setTrigger} tags={tags} />
+
+        <Label className="flex items-center gap-3 rounded-lg border border-border/60 bg-background/40 p-3">
+          <Checkbox
+            checked={active}
+            onCheckedChange={(v) => setActive(v === true)}
+            id="flow-active"
+          />
+          <div className="space-y-0.5">
+            <span className="text-sm font-medium leading-none">Flow activo</span>
+            <span className="block text-xs text-muted-foreground">
+              Si está pausado, no se ejecuta aunque coincida el trigger.
+            </span>
           </div>
-        </SortableContext>
-      </DndContext>
+        </Label>
+      </div>
 
-      <div className="flex flex-wrap gap-2">
+      <div className="space-y-3">
+        <div className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-sm font-semibold tracking-tight">Pasos</h2>
+          <span className="text-xs text-muted-foreground tabular-nums">
+            {steps.length} {steps.length === 1 ? 'paso' : 'pasos'}
+          </span>
+        </div>
+        <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
+          <SortableContext items={steps.map((s) => s.__id)} strategy={verticalListSortingStrategy}>
+            <div className="space-y-2">
+              {steps.map((step, idx) => (
+                <SortableStep
+                  key={step.__id}
+                  id={step.__id}
+                  index={idx}
+                  step={step}
+                  channels={channels}
+                  templates={templates}
+                  tags={tags}
+                  onChange={(next) =>
+                    setSteps((arr) =>
+                      arr.map((s) => (s.__id === step.__id ? { ...next, __id: s.__id } : s)),
+                    )
+                  }
+                  onRemove={() =>
+                    setSteps((arr) =>
+                      arr.length > 1 ? arr.filter((s) => s.__id !== step.__id) : arr,
+                    )
+                  }
+                />
+              ))}
+            </div>
+          </SortableContext>
+        </DndContext>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
         <Button
           type="button"
           variant="outline"
+          className="gap-1.5"
           onClick={() =>
             setSteps((arr) => [
               ...arr,
@@ -187,9 +233,10 @@ export function FlowBuilder({
             ])
           }
         >
-          + Step
+          <Plus className="size-4" />
+          Agregar paso
         </Button>
-        <Button type="submit" disabled={pending}>
+        <Button type="submit" disabled={pending} className="ml-auto" size="lg">
           {pending ? 'Guardando…' : 'Guardar flow'}
         </Button>
       </div>
@@ -207,74 +254,88 @@ function TriggerEditor({
   tags: Tag[]
 }) {
   return (
-    <div className="space-y-2">
-      <p className="text-sm font-medium">Trigger</p>
-      <Select
-        value={value.type}
-        onValueChange={(v) => {
-          const t = v as FlowTriggerConfig['type']
-          if (t === 'customer_inactive') onChange({ type: t, days: 30 })
-          else if (t === 'event_starting') onChange({ type: t, hours_before: 24 })
-          else if (t === 'tag_added') onChange({ type: t })
-          else onChange({ type: t })
-        }}
-      >
-        <SelectTrigger>
-          <SelectValue />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="customer_inactive">Cliente inactivo</SelectItem>
-          <SelectItem value="birthday">Cumpleaños</SelectItem>
-          <SelectItem value="after_visit">Después de visita</SelectItem>
-          <SelectItem value="event_starting">Evento próximo</SelectItem>
-          <SelectItem value="tag_added">Tag agregado</SelectItem>
-        </SelectContent>
-      </Select>
-      {value.type === 'customer_inactive' ? (
-        <Input
-          type="number"
-          min={1}
-          max={365}
-          value={value.days}
-          onChange={(e) =>
-            onChange({ type: 'customer_inactive', days: Math.max(1, Number(e.target.value)) })
-          }
-        />
-      ) : null}
-      {value.type === 'event_starting' ? (
-        <Input
-          type="number"
-          min={1}
-          max={168}
-          value={value.hours_before}
-          onChange={(e) =>
-            onChange({
-              type: 'event_starting',
-              hours_before: Math.max(1, Number(e.target.value)),
-            })
-          }
-        />
-      ) : null}
-      {value.type === 'tag_added' ? (
+    <div className="grid gap-1.5">
+      <Label className="flex items-center gap-1.5 text-xs uppercase tracking-wider text-muted-foreground">
+        <Zap className="size-3" />
+        Trigger
+      </Label>
+      <div className="rounded-lg border border-border/60 bg-background/40 p-3 space-y-3">
         <Select
-          value={value.tag_id ?? ''}
-          onValueChange={(v) =>
-            onChange({ type: 'tag_added', tag_id: v === '__any' ? undefined : v })
-          }
+          value={value.type}
+          onValueChange={(v) => {
+            const t = v as FlowTriggerConfig['type']
+            if (t === 'customer_inactive') onChange({ type: t, days: 30 })
+            else if (t === 'event_starting') onChange({ type: t, hours_before: 24 })
+            else if (t === 'tag_added') onChange({ type: t })
+            else onChange({ type: t })
+          }}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Cualquier tag" />
+            <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="__any">Cualquier tag</SelectItem>
-            {tags.map((t) => (
-              <SelectItem key={t.id} value={t.id}>
-                {t.name}
-              </SelectItem>
-            ))}
+            <SelectItem value="customer_inactive">Cliente inactivo</SelectItem>
+            <SelectItem value="birthday">Cumpleaños</SelectItem>
+            <SelectItem value="after_visit">Después de una visita</SelectItem>
+            <SelectItem value="event_starting">Evento próximo</SelectItem>
+            <SelectItem value="tag_added">Tag agregado</SelectItem>
           </SelectContent>
         </Select>
-      ) : null}
+        {value.type === 'customer_inactive' ? (
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Días sin venir</Label>
+            <Input
+              type="number"
+              min={1}
+              max={365}
+              value={value.days}
+              onChange={(e) =>
+                onChange({ type: 'customer_inactive', days: Math.max(1, Number(e.target.value)) })
+              }
+            />
+          </div>
+        ) : null}
+        {value.type === 'event_starting' ? (
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Horas antes</Label>
+            <Input
+              type="number"
+              min={1}
+              max={168}
+              value={value.hours_before}
+              onChange={(e) =>
+                onChange({
+                  type: 'event_starting',
+                  hours_before: Math.max(1, Number(e.target.value)),
+                })
+              }
+            />
+          </div>
+        ) : null}
+        {value.type === 'tag_added' ? (
+          <div className="grid gap-1.5">
+            <Label className="text-xs text-muted-foreground">Tag</Label>
+            <Select
+              value={value.tag_id ?? '__any'}
+              onValueChange={(v) =>
+                onChange({ type: 'tag_added', tag_id: v === '__any' ? undefined : v })
+              }
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Cualquier tag" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="__any">Cualquier tag</SelectItem>
+                {tags.map((t) => (
+                  <SelectItem key={t.id} value={t.id}>
+                    {t.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        ) : null}
+      </div>
     </div>
   )
 }
@@ -298,48 +359,65 @@ function SortableStep({
   onChange: (next: FlowStepConfig) => void
   onRemove: () => void
 }) {
-  const { attributes, listeners, setNodeRef, transform, transition } = useSortable({ id })
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({
+    id,
+  })
   const style = { transform: CSS.Transform.toString(transform), transition }
+  const Icon = STEP_ICON[step.type]
 
   return (
-    <Card ref={setNodeRef} style={style}>
-      <CardContent className="space-y-3 p-4">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <button
-              type="button"
-              {...attributes}
-              {...listeners}
-              className="cursor-grab text-muted-foreground"
-              aria-label="Reordenar"
-            >
-              ⋮⋮
-            </button>
-            <Badge variant="outline">#{index + 1}</Badge>
-            <Select
-              value={step.type}
-              onValueChange={(v) =>
-                onChange(
-                  buildDefaultForType(v as FlowStepConfig['type'], channels, templates, tags),
-                )
-              }
-            >
-              <SelectTrigger className="w-44">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="send_template">{STEP_LABEL.send_template}</SelectItem>
-                <SelectItem value="wait">{STEP_LABEL.wait}</SelectItem>
-                <SelectItem value="condition">{STEP_LABEL.condition}</SelectItem>
-                <SelectItem value="add_tag">{STEP_LABEL.add_tag}</SelectItem>
-              </SelectContent>
-            </Select>
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`card-hairline rounded-xl border bg-card p-4 transition-shadow ${isDragging ? 'shadow-lg ring-1 ring-ring/40' : ''}`}
+    >
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            {...attributes}
+            {...listeners}
+            className="cursor-grab rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
+            aria-label="Reordenar"
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <Badge variant="outline" className="font-mono tabular-nums">
+            #{index + 1}
+          </Badge>
+          <div className="flex size-7 items-center justify-center rounded-md bg-primary/15 text-primary">
+            <Icon className="size-3.5" />
           </div>
-          <Button type="button" size="sm" variant="ghost" onClick={onRemove}>
-            ✕
-          </Button>
+          <Select
+            value={step.type}
+            onValueChange={(v) =>
+              onChange(buildDefaultForType(v as FlowStepConfig['type'], channels, templates, tags))
+            }
+          >
+            <SelectTrigger className="h-8 w-44 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="send_template">{STEP_LABEL.send_template}</SelectItem>
+              <SelectItem value="wait">{STEP_LABEL.wait}</SelectItem>
+              <SelectItem value="condition">{STEP_LABEL.condition}</SelectItem>
+              <SelectItem value="add_tag">{STEP_LABEL.add_tag}</SelectItem>
+            </SelectContent>
+          </Select>
         </div>
+        <Button
+          type="button"
+          size="icon"
+          variant="ghost"
+          className="size-7 text-muted-foreground hover:text-destructive"
+          onClick={onRemove}
+          aria-label="Quitar paso"
+        >
+          <X className="size-3.5" />
+        </Button>
+      </div>
 
+      <div className="mt-3">
         <StepDetail
           step={step}
           onChange={onChange}
@@ -347,8 +425,8 @@ function SortableStep({
           templates={templates}
           tags={tags}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }
 
@@ -391,7 +469,7 @@ function StepDetail({
   if (step.type === 'send_template') {
     const filtered = templates.filter((t) => t.channel_id === step.channel_id)
     return (
-      <div className="grid grid-cols-2 gap-2">
+      <div className="grid gap-2 sm:grid-cols-2">
         <Select
           value={step.channel_id}
           onValueChange={(v) => onChange({ ...step, channel_id: v, template_id: '' })}
@@ -417,7 +495,7 @@ function StepDetail({
           <SelectContent>
             {filtered.map((t) => (
               <SelectItem key={t.id} value={t.id}>
-                {t.name} ({t.language})
+                {t.name} <span className="text-muted-foreground">({t.language})</span>
               </SelectItem>
             ))}
           </SelectContent>
@@ -427,22 +505,27 @@ function StepDetail({
   }
   if (step.type === 'wait') {
     return (
-      <Input
-        type="number"
-        min={1}
-        max={43200}
-        value={step.minutes}
-        onChange={(e) => onChange({ type: 'wait', minutes: Math.max(1, Number(e.target.value)) })}
-      />
+      <div className="flex items-center gap-2">
+        <Input
+          type="number"
+          min={1}
+          max={43200}
+          value={step.minutes}
+          onChange={(e) => onChange({ type: 'wait', minutes: Math.max(1, Number(e.target.value)) })}
+          className="w-32"
+        />
+        <span className="text-sm text-muted-foreground">minutos</span>
+      </div>
     )
   }
   if (step.type === 'condition') {
     return (
-      <div className="grid grid-cols-3 gap-2">
+      <div className="grid gap-2 sm:grid-cols-3">
         <Input
           value={step.field}
           onChange={(e) => onChange({ ...step, field: e.target.value })}
-          placeholder="customer.field o context.field"
+          placeholder="customer.field"
+          className="font-mono text-xs"
         />
         <Select
           value={step.op}
@@ -458,8 +541,8 @@ function StepDetail({
             <SelectItem value="gte">≥</SelectItem>
             <SelectItem value="lt">&lt;</SelectItem>
             <SelectItem value="lte">≤</SelectItem>
-            <SelectItem value="is_true">true</SelectItem>
-            <SelectItem value="is_false">false</SelectItem>
+            <SelectItem value="is_true">es true</SelectItem>
+            <SelectItem value="is_false">es false</SelectItem>
           </SelectContent>
         </Select>
         <Input

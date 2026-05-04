@@ -1,11 +1,11 @@
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { requireTenantAccess, TenantNotFoundError } from '@/lib/tenant'
 import { NewCustomerForm } from './new-customer-form'
 
-export const metadata = { title: 'Nuevo cliente — HUB' }
+export const metadata = { title: 'Nuevo cliente' }
 
 export default async function NuevoClientePage({
   params,
@@ -22,21 +22,22 @@ export default async function NuevoClientePage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-xl px-4 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Nuevo cliente</h1>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/${tenantSlug}/clientes`}>Volver</Link>
-        </Button>
+    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}/clientes`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver a clientes
+      </Link>
+      <PageHeader
+        eyebrow="Clientes"
+        title="Nuevo cliente"
+        description="Cargá los datos básicos. Vamos a normalizar el teléfono automáticamente."
+      />
+      <div className="card-hairline rounded-xl border bg-card p-6">
+        <NewCustomerForm tenantSlug={tenantSlug} />
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Datos básicos</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NewCustomerForm tenantSlug={tenantSlug} />
-        </CardContent>
-      </Card>
-    </main>
+    </div>
   )
 }

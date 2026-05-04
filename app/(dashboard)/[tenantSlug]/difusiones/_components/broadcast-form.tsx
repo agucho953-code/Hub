@@ -1,11 +1,12 @@
 'use client'
 
+import { ArrowLeft, ArrowRight, Calendar, Megaphone, Sparkles, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useMemo, useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
 import {
   Select,
   SelectContent,
@@ -13,6 +14,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Stepper } from '@/components/ui/stepper'
 import { type BroadcastActionState, scheduleBroadcast } from '@/lib/broadcasts/actions'
 
 type Channel = { id: string; type: 'whatsapp' | 'instagram'; display_name: string | null }
@@ -20,6 +22,14 @@ type Template = { id: string; name: string; language: string; channel_id: string
 type Audience = { id: string; name: string; customer_count_cached: number }
 
 const initial: BroadcastActionState = { ok: true }
+
+const STEPS = [
+  { label: 'Canal', description: 'WhatsApp o Instagram' },
+  { label: 'Template', description: 'Mensaje aprobado' },
+  { label: 'Audiencia', description: 'A quién mandar' },
+  { label: 'Detalles', description: 'Nombre y horario' },
+  { label: 'Confirmar', description: 'Revisión final' },
+]
 
 export function BroadcastForm({
   tenantSlug,
@@ -45,6 +55,8 @@ export function BroadcastForm({
     () => templates.filter((t) => !channelId || t.channel_id === channelId),
     [templates, channelId],
   )
+  const channel = channels.find((c) => c.id === channelId)
+  const template = filteredTemplates.find((t) => t.id === templateId)
   const audience = audiences.find((a) => a.id === audienceId)
 
   useEffect(() => {
@@ -61,152 +73,207 @@ export function BroadcastForm({
     if (step === 0) return channels.length > 0 && channelId.length > 0
     if (step === 1) return templateId.length > 0
     if (step === 2) return audienceId.length > 0
-    if (step === 3) return name.length > 0 // y opcionalmente scheduledAt
+    if (step === 3) return name.length > 0
     return true
   })()
 
   return (
-    <form action={action} className="space-y-4">
+    <form action={action} className="space-y-6">
       <input type="hidden" name="channel_id" value={channelId} />
       <input type="hidden" name="template_id" value={templateId} />
       <input type="hidden" name="audience_id" value={audienceId} />
       <input type="hidden" name="name" value={name} />
       <input type="hidden" name="scheduled_at" value={scheduledAt} />
 
-      <Card>
-        <CardHeader className="pb-2">
-          <CardTitle className="text-base">Paso {step + 1} de 5</CardTitle>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {step === 0 ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Canal</p>
-              {channels.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No hay canales conectados. Conectá WhatsApp en Configuración → Canales.
+      <Stepper steps={STEPS} current={step} />
+
+      <div className="card-hairline rounded-xl border bg-card p-5 sm:p-6">
+        {step === 0 ? (
+          <div className="space-y-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold tracking-tight">¿Por qué canal?</h2>
+              <p className="text-sm text-muted-foreground">Solo aparecen los canales conectados.</p>
+            </div>
+            {channels.length === 0 ? (
+              <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
+                <p className="font-medium text-warning">No hay canales conectados</p>
+                <p className="mt-1 text-muted-foreground">
+                  Conectá WhatsApp en Configuración → Canales antes de programar una difusión.
                 </p>
-              ) : (
-                <Select value={channelId} onValueChange={setChannelId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Elegí canal" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {channels.map((c) => (
-                      <SelectItem key={c.id} value={c.id}>
+              </div>
+            ) : (
+              <Select value={channelId} onValueChange={setChannelId}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Elegí canal" />
+                </SelectTrigger>
+                <SelectContent>
+                  {channels.map((c) => (
+                    <SelectItem key={c.id} value={c.id}>
+                      <span className="flex items-center gap-2">
+                        <span
+                          className={`size-1.5 rounded-full ${c.type === 'whatsapp' ? 'bg-success' : 'bg-warning'}`}
+                        />
                         {c.display_name ?? c.type}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          ) : null}
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        ) : null}
 
-          {step === 1 ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Template aprobado</p>
-              {filteredTemplates.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No hay templates aprobados para ese canal. Sincronizá en Configuración →
-                  Templates.
+        {step === 1 ? (
+          <div className="space-y-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold tracking-tight">¿Qué template?</h2>
+              <p className="text-sm text-muted-foreground">Solo aparecen los aprobados por Meta.</p>
+            </div>
+            {filteredTemplates.length === 0 ? (
+              <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
+                <p className="font-medium text-warning">Sin templates aprobados</p>
+                <p className="mt-1 text-muted-foreground">
+                  Sincronizá en Configuración → Plantillas y esperá la aprobación de Meta.
                 </p>
-              ) : (
-                <Select value={templateId} onValueChange={setTemplateId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Elegí template" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {filteredTemplates.map((t) => (
-                      <SelectItem key={t.id} value={t.id}>
-                        {t.name} ({t.language})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          ) : null}
+              </div>
+            ) : (
+              <Select value={templateId} onValueChange={setTemplateId}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Elegí template" />
+                </SelectTrigger>
+                <SelectContent>
+                  {filteredTemplates.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>
+                      {t.name} <span className="ml-1 text-muted-foreground">({t.language})</span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        ) : null}
 
-          {step === 2 ? (
-            <div className="space-y-2">
-              <p className="text-sm font-medium">Audiencia</p>
-              {audiences.length === 0 ? (
-                <p className="text-sm text-muted-foreground">
-                  No hay audiencias. Creá una en /audiencias.
+        {step === 2 ? (
+          <div className="space-y-3">
+            <div>
+              <h2 className="font-display text-lg font-semibold tracking-tight">¿A quién?</h2>
+              <p className="text-sm text-muted-foreground">
+                La audiencia se recalcula antes del envío.
+              </p>
+            </div>
+            {audiences.length === 0 ? (
+              <div className="rounded-lg border border-warning/40 bg-warning/5 p-4 text-sm">
+                <p className="font-medium text-warning">Sin audiencias</p>
+                <p className="mt-1 text-muted-foreground">
+                  Creá una audiencia primero en Marketing → Audiencias.
                 </p>
-              ) : (
-                <Select value={audienceId} onValueChange={setAudienceId}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Elegí audiencia" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {audiences.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.name} ({a.customer_count_cached})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              )}
-            </div>
-          ) : null}
+              </div>
+            ) : (
+              <Select value={audienceId} onValueChange={setAudienceId}>
+                <SelectTrigger className="h-11">
+                  <SelectValue placeholder="Elegí audiencia" />
+                </SelectTrigger>
+                <SelectContent>
+                  {audiences.map((a) => (
+                    <SelectItem key={a.id} value={a.id}>
+                      <span className="flex items-center gap-2">
+                        {a.name}
+                        <span className="rounded-full bg-secondary px-1.5 py-0.5 text-[10px] tabular-nums">
+                          {a.customer_count_cached}
+                        </span>
+                      </span>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            )}
+          </div>
+        ) : null}
 
-          {step === 3 ? (
-            <div className="space-y-3">
+        {step === 3 ? (
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-display text-lg font-semibold tracking-tight">Detalles</h2>
+              <p className="text-sm text-muted-foreground">Un nombre interno y cuándo enviar.</p>
+            </div>
+            <div className="grid gap-1.5">
+              <Label htmlFor="name-input">Nombre interno</Label>
               <Input
-                placeholder="Nombre interno"
+                id="name-input"
+                placeholder="Ej: Septiembre · peña folklórica"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 maxLength={120}
                 required
               />
-              <div className="space-y-1">
-                <label htmlFor="scheduled-at-input" className="block text-sm font-medium">
-                  Cuándo enviar
-                </label>
-                <Input
-                  id="scheduled-at-input"
-                  type="datetime-local"
-                  value={scheduledAt.slice(0, 16)}
-                  onChange={(e) =>
-                    setScheduledAt(e.target.value ? new Date(e.target.value).toISOString() : '')
-                  }
-                />
-                <span className="block text-xs text-muted-foreground">Vacío = enviar ahora.</span>
-              </div>
             </div>
-          ) : null}
-
-          {step === 4 ? (
-            <div className="space-y-1 text-sm">
-              <p>
-                <span className="text-muted-foreground">Canal: </span>
-                {channels.find((c) => c.id === channelId)?.display_name ?? channelId}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Template: </span>
-                {filteredTemplates.find((t) => t.id === templateId)?.name ?? templateId}
-              </p>
-              <p>
-                <span className="text-muted-foreground">Audiencia: </span>
-                {audience?.name} ({audience?.customer_count_cached ?? '?'} clientes)
-              </p>
-              <p>
-                <span className="text-muted-foreground">Cuándo: </span>
-                {scheduledAt ? new Date(scheduledAt).toLocaleString('es-AR') : 'Ahora'}
-              </p>
+            <div className="grid gap-1.5">
+              <Label htmlFor="scheduled-at-input">Cuándo enviar</Label>
+              <Input
+                id="scheduled-at-input"
+                type="datetime-local"
+                value={scheduledAt.slice(0, 16)}
+                onChange={(e) =>
+                  setScheduledAt(e.target.value ? new Date(e.target.value).toISOString() : '')
+                }
+              />
+              <p className="text-[11px] text-muted-foreground">Vacío = enviar ahora.</p>
             </div>
-          ) : null}
-        </CardContent>
-      </Card>
+          </div>
+        ) : null}
 
-      <div className="flex justify-between">
+        {step === 4 ? (
+          <div className="space-y-4">
+            <div>
+              <h2 className="font-display text-lg font-semibold tracking-tight">Revisión final</h2>
+              <p className="text-sm text-muted-foreground">Verificá antes de programar.</p>
+            </div>
+            <dl className="grid gap-3">
+              <SummaryRow
+                icon={Megaphone}
+                label="Canal"
+                value={channel?.display_name ?? channel?.type ?? '—'}
+              />
+              <SummaryRow
+                icon={Sparkles}
+                label="Template"
+                value={template ? `${template.name} (${template.language})` : '—'}
+              />
+              <SummaryRow
+                icon={Users}
+                label="Audiencia"
+                value={
+                  audience
+                    ? `${audience.name} · ${audience.customer_count_cached.toLocaleString('es-AR')} clientes`
+                    : '—'
+                }
+              />
+              <SummaryRow
+                icon={Calendar}
+                label="Cuándo"
+                value={
+                  scheduledAt
+                    ? new Date(scheduledAt).toLocaleString('es-AR', {
+                        dateStyle: 'long',
+                        timeStyle: 'short',
+                      })
+                    : 'Ahora mismo'
+                }
+              />
+            </dl>
+          </div>
+        ) : null}
+      </div>
+
+      <div className="flex justify-between gap-2">
         <Button
           type="button"
           variant="outline"
           disabled={step === 0}
           onClick={() => setStep((s) => Math.max(0, s - 1))}
+          className="gap-1.5"
         >
+          <ArrowLeft className="size-3.5" />
           Atrás
         </Button>
         {step < 4 ? (
@@ -214,15 +281,39 @@ export function BroadcastForm({
             type="button"
             disabled={!canNext}
             onClick={() => setStep((s) => Math.min(4, s + 1))}
+            className="gap-1.5"
           >
             Siguiente
+            <ArrowRight className="size-3.5" />
           </Button>
         ) : (
-          <Button type="submit" disabled={pending}>
+          <Button type="submit" disabled={pending} size="lg">
             {pending ? 'Programando…' : 'Programar difusión'}
           </Button>
         )}
       </div>
     </form>
+  )
+}
+
+function SummaryRow({
+  icon: Icon,
+  label,
+  value,
+}: {
+  icon: typeof Megaphone
+  label: string
+  value: string
+}) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg border border-border/60 bg-background/40 p-3">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <Icon className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <dt className="text-[11px] uppercase tracking-wider text-muted-foreground">{label}</dt>
+        <dd className="mt-0.5 truncate text-sm font-medium">{value}</dd>
+      </div>
+    </div>
   )
 }

@@ -20,7 +20,7 @@ import { CSS } from '@dnd-kit/utilities'
 import { GripVertical } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Badge } from '@/components/ui/badge'
 import { reorderCategories } from '@/lib/menu/actions'
 import type { MenuCategory, MenuItem } from '@/lib/menu/queries'
 import { CategoryRow } from './category-row'
@@ -62,20 +62,10 @@ export function MenuBoard({
     })
   }
 
-  if (categories.length === 0) {
-    return (
-      <Card>
-        <CardContent className="py-10 text-center text-sm text-muted-foreground">
-          Todavía no creaste categorías. Empezá agregando una arriba.
-        </CardContent>
-      </Card>
-    )
-  }
-
   return (
     <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={onDragEnd}>
       <SortableContext items={order.map((c) => c.id)} strategy={verticalListSortingStrategy}>
-        <div className="space-y-4">
+        <div className="space-y-3">
           {order.map((cat) => (
             <SortableCategory
               key={cat.id}
@@ -113,32 +103,35 @@ function SortableCategory({
   }
 
   return (
-    <Card ref={setNodeRef} style={style}>
-      <CardHeader className="flex flex-row items-center gap-3 space-y-0">
+    <div
+      ref={setNodeRef}
+      style={style}
+      className="card-hairline overflow-hidden rounded-xl border bg-card"
+    >
+      <header className="flex items-center gap-3 border-b border-border/60 bg-secondary/20 px-4 py-3">
         <button
           {...attributes}
           {...listeners}
           aria-label={`Mover ${category.name}`}
-          className="cursor-grab text-muted-foreground hover:text-foreground"
+          className="cursor-grab rounded p-1 text-muted-foreground hover:bg-secondary hover:text-foreground active:cursor-grabbing"
           type="button"
         >
           <GripVertical className="size-4" />
         </button>
-        <CardTitle className="flex-1">
-          {category.name}
-          {!category.active ? (
-            <span className="ml-2 text-xs text-muted-foreground">(pausada)</span>
-          ) : null}
-        </CardTitle>
-      </CardHeader>
-      <CardContent>
+        <h3 className="font-display text-base font-semibold tracking-tight">{category.name}</h3>
+        {!category.active ? <Badge variant="outline">Pausada</Badge> : null}
+        <span className="ml-auto text-xs tabular-nums text-muted-foreground">
+          {items.length} ítem{items.length === 1 ? '' : 's'}
+        </span>
+      </header>
+      <div className="p-4">
         <CategoryRow
           category={category}
           items={items}
           tenantSlug={tenantSlug}
           allCategories={allCategories}
         />
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   )
 }

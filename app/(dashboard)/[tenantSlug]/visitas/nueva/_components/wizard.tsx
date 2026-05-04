@@ -1,6 +1,7 @@
 'use client'
 
 import { useReducer, useState } from 'react'
+import { Stepper } from '@/components/ui/stepper'
 import type { MenuCategory, MenuItem } from '@/lib/menu/queries'
 import type { PointsRule } from '@/lib/points/types'
 import { CustomerStep } from './customer-step'
@@ -64,6 +65,12 @@ function reducer(s: State, a: Action): State {
   }
 }
 
+const STEPS = [
+  { label: 'Cliente', description: 'Buscá o creá' },
+  { label: 'Consumo', description: 'Cargá los ítems' },
+  { label: 'Confirmar', description: 'Cobrar y otorgar puntos' },
+]
+
 export function CloseTableWizard({
   tenantSlug,
   categories,
@@ -84,8 +91,8 @@ export function CloseTableWizard({
   const [submitting, setSubmitting] = useState(false)
 
   return (
-    <div>
-      <Stepper step={state.step} />
+    <div className="space-y-6">
+      <Stepper steps={STEPS} current={state.step - 1} />
 
       {state.step === 1 ? (
         <CustomerStep
@@ -100,6 +107,7 @@ export function CloseTableWizard({
 
       {state.step === 2 && state.customer ? (
         <ItemsStep
+          customer={state.customer}
           categories={categories}
           items={items}
           lines={state.lines}
@@ -127,35 +135,5 @@ export function CloseTableWizard({
         />
       ) : null}
     </div>
-  )
-}
-
-function Stepper({ step }: { step: 1 | 2 | 3 }) {
-  const labels = ['Cliente', 'Ítems', 'Confirmar']
-  return (
-    <ol className="mb-6 flex items-center gap-2 text-sm">
-      {labels.map((label, i) => {
-        const n = (i + 1) as 1 | 2 | 3
-        const active = n === step
-        const done = n < step
-        return (
-          <li key={label} className="flex items-center gap-2">
-            <span
-              className={`flex size-6 items-center justify-center rounded-full text-xs font-medium ${
-                active
-                  ? 'bg-primary text-primary-foreground'
-                  : done
-                    ? 'bg-emerald-500 text-white'
-                    : 'bg-muted text-muted-foreground'
-              }`}
-            >
-              {n}
-            </span>
-            <span className={active ? 'font-medium' : 'text-muted-foreground'}>{label}</span>
-            {n < 3 ? <span className="text-muted-foreground">›</span> : null}
-          </li>
-        )
-      })}
-    </ol>
   )
 }

@@ -1,5 +1,6 @@
 'use client'
 
+import { Mail } from 'lucide-react'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
@@ -32,21 +33,29 @@ export function InvitationRow({
   }
 
   return (
-    <div className="flex items-center justify-between py-3 text-sm">
-      <div className="flex flex-col">
-        <span className="font-medium">{invitation.email}</span>
-        <span className="text-xs text-muted-foreground">
+    <div className="flex items-center gap-3 px-4 py-3">
+      <div className="flex size-8 shrink-0 items-center justify-center rounded-md bg-secondary text-muted-foreground">
+        <Mail className="size-4" />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{invitation.email}</p>
+        <p className="text-[11px] text-muted-foreground">
           Expira {new Date(invitation.expires_at).toLocaleDateString('es-AR')}
-        </span>
+          {expired ? ' · vencida' : ''}
+        </p>
       </div>
-      <div className="flex items-center gap-2">
-        <Badge variant={expired ? 'destructive' : 'secondary'} className="capitalize">
-          {invitation.role}
-        </Badge>
-        <Button variant="ghost" size="sm" disabled={isPending} onClick={handleCancel}>
-          Cancelar
-        </Button>
-      </div>
+      <Badge variant={expired ? 'destructive' : 'outline'} className="capitalize">
+        {invitation.role}
+      </Badge>
+      <Button
+        variant="ghost"
+        size="sm"
+        disabled={isPending}
+        onClick={handleCancel}
+        className="text-muted-foreground hover:text-destructive"
+      >
+        Cancelar
+      </Button>
     </div>
   )
 }

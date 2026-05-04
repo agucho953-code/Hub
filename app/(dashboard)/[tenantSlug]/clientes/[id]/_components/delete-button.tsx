@@ -1,5 +1,6 @@
 'use client'
 
+import { Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -44,7 +45,12 @@ export function DeleteButton({
   return (
     <AlertDialog open={open} onOpenChange={setOpen}>
       <AlertDialogTrigger asChild>
-        <Button variant="outline" size="sm">
+        <Button
+          variant="ghost"
+          size="sm"
+          className="gap-1.5 text-muted-foreground hover:text-destructive"
+        >
+          <Trash2 className="size-3.5" />
           Eliminar
         </Button>
       </AlertDialogTrigger>
@@ -52,13 +58,17 @@ export function DeleteButton({
         <AlertDialogHeader>
           <AlertDialogTitle>¿Eliminar este cliente?</AlertDialogTitle>
           <AlertDialogDescription>
-            Vamos a archivarlo. No va a aparecer en la lista ni en estadísticas, pero sus datos
-            quedan auditables. Esta acción se puede revertir contactando soporte.
+            Lo archivamos. No va a aparecer en la lista ni en estadísticas, pero sus datos quedan
+            auditables. Esta acción se puede revertir contactando soporte.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter>
           <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
-          <AlertDialogAction onClick={onConfirm} disabled={pending}>
+          <AlertDialogAction
+            onClick={onConfirm}
+            disabled={pending}
+            className="bg-destructive text-white hover:bg-destructive/90"
+          >
             {pending ? 'Eliminando…' : 'Sí, eliminar'}
           </AlertDialogAction>
         </AlertDialogFooter>

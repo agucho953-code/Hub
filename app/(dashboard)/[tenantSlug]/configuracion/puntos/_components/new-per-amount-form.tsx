@@ -1,5 +1,6 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useActionState, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
@@ -13,7 +14,8 @@ const initial: LoyaltyActionState = { ok: true }
 function SubmitBtn() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending} size="sm">
+    <Button type="submit" disabled={pending} size="sm" className="gap-1.5">
+      <Plus className="size-3.5" />
       {pending ? 'Creando…' : 'Crear regla'}
     </Button>
   )
@@ -29,12 +31,14 @@ export function NewPerAmountForm({ tenantSlug }: { tenantSlug: string }) {
   }, [state])
 
   return (
-    <form action={formAction} className="rounded-md border p-3">
-      <p className="mb-2 text-sm font-medium">Por monto gastado</p>
-      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_1fr_auto] sm:items-end">
+    <form action={formAction} className="card-hairline rounded-xl border bg-card p-4 space-y-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Por monto gastado
+      </h3>
+      <div className="grid gap-2 sm:grid-cols-[1fr_1fr_100px_auto] sm:items-end">
         <div className="grid gap-1">
-          <Label htmlFor="every-cents" className="text-xs">
-            Cada (centavos)
+          <Label htmlFor="every-cents" className="text-[11px] text-muted-foreground">
+            Cada (¢)
           </Label>
           <Input
             id="every-cents"
@@ -43,28 +47,39 @@ export function NewPerAmountForm({ tenantSlug }: { tenantSlug: string }) {
             min={1}
             required
             placeholder="100000"
+            className="tabular-nums"
           />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor="points" className="text-xs">
-            Otorgar puntos
+          <Label htmlFor="points" className="text-[11px] text-muted-foreground">
+            Puntos
           </Label>
-          <Input id="points" name="points" type="number" min={1} required placeholder="10" />
+          <Input
+            id="points"
+            name="points"
+            type="number"
+            min={1}
+            required
+            placeholder="10"
+            className="tabular-nums"
+          />
         </div>
         <div className="grid gap-1">
-          <Label htmlFor="priority" className="text-xs">
-            Prioridad
+          <Label htmlFor="priority" className="text-[11px] text-muted-foreground">
+            Prio.
           </Label>
-          <Input id="priority" name="priority" type="number" defaultValue={0} />
+          <Input
+            id="priority"
+            name="priority"
+            type="number"
+            defaultValue={0}
+            className="tabular-nums"
+          />
         </div>
-        <div>
-          <input type="hidden" name="active" value="true" />
-          <SubmitBtn />
-        </div>
+        <input type="hidden" name="active" value="true" />
+        <SubmitBtn />
       </div>
-      <p className="mt-2 text-xs text-muted-foreground">
-        Ejemplo: cada $1.000 (= 100.000 ¢) → 10 puntos.
-      </p>
+      <p className="text-[11px] text-muted-foreground">Ej: cada $1.000 (100.000 ¢) → 10 puntos.</p>
     </form>
   )
 }

@@ -1,16 +1,19 @@
+import { ChevronRight, Plus, Workflow } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRoot,
+  DataTableScroll,
+  DataTableShell,
+} from '@/components/ui/data-table'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { listFlows } from '@/lib/flows/queries'
 import {
   RoleRequiredError,
@@ -20,7 +23,7 @@ import {
 } from '@/lib/tenant'
 import type { FlowTriggerType } from '@/types/database'
 
-export const metadata = { title: 'Flows — HUB' }
+export const metadata = { title: 'Flows' }
 export const dynamic = 'force-dynamic'
 
 const TRIGGER_LABEL: Record<FlowTriggerType, string> = {
@@ -46,56 +49,83 @@ export default async function FlowsPage({ params }: { params: Promise<{ tenantSl
   const flows = await listFlows(access.tenant.id)
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 p-4">
-      <header className="flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Flows</h1>
-        <Button asChild>
-          <Link href={`/${tenantSlug}/flows/nuevo`}>Nuevo flow</Link>
-        </Button>
-      </header>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Marketing"
+        title="Flows"
+        description="Automatizaciones que se disparan solas: cumpleaños, post-visita, recordatorios de evento."
+        actions={
+          <Button asChild className="gap-2">
+            <Link href={`/${tenantSlug}/flows/nuevo`}>
+              <Plus className="size-4" />
+              Nuevo flow
+            </Link>
+          </Button>
+        }
+      />
 
       {flows.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Todavía no hay flows automáticos.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Workflow}
+          title="Sin flows automáticos"
+          description="Los flows ejecutan acciones cuando algo pasa: el cliente cumple años, no viene hace 30 días, viene un evento. Definilos una vez y trabajan solos."
+          action={
+            <Button asChild className="gap-2">
+              <Link href={`/${tenantSlug}/flows/nuevo`}>
+                <Plus className="size-4" />
+                Crear primer flow
+              </Link>
+            </Button>
+          }
+        />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Trigger</TableHead>
-                  <TableHead>Steps</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead aria-label="acciones" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <DataTableShell>
+          <DataTableScroll>
+            <DataTableRoot>
+              <DataTableHead>
+                <tr>
+                  <DataTableHeader>Nombre</DataTableHeader>
+                  <DataTableHeader>Trigger</DataTableHeader>
+                  <DataTableHeader>Pasos</DataTableHeader>
+                  <DataTableHeader>Estado</DataTableHeader>
+                  <DataTableHeader className="w-8" />
+                </tr>
+              </DataTableHead>
+              <DataTableBody>
                 {flows.map((f) => (
-                  <TableRow key={f.id}>
-                    <TableCell className="font-medium">{f.name}</TableCell>
-                    <TableCell>{TRIGGER_LABEL[f.trigger_type]}</TableCell>
-                    <TableCell>{f.step_count}</TableCell>
-                    <TableCell>
-                      <Badge variant={f.active ? 'default' : 'outline'}>
-                        {f.active ? 'Activo' : 'Pausado'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/${tenantSlug}/flows/${f.id}`}>Editar</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                  <tr key={f.id} className="group transition-colors hover:bg-secondary/40">
+                    <DataTableCell>
+                      <Link
+                        href={`/${tenantSlug}/flows/${f.id}`}
+                        className="font-medium group-hover:text-primary"
+                      >
+                        {f.name}
+                      </Link>
+                    </DataTableCell>
+                    <DataTableCell className="text-sm text-muted-foreground">
+                      {TRIGGER_LABEL[f.trigger_type]}
+                    </DataTableCell>
+                    <DataTableCell className="tabular-nums">{f.step_count}</DataTableCell>
+                    <DataTableCell>
+                      {f.active ? (
+                        <Badge className="gap-1 bg-success text-success-foreground hover:bg-success/90">
+                          <span className="size-1.5 rounded-full bg-current" />
+                          Activo
+                        </Badge>
+                      ) : (
+                        <Badge variant="outline">Pausado</Badge>
+                      )}
+                    </DataTableCell>
+                    <DataTableCell className="text-muted-foreground/40 group-hover:text-muted-foreground">
+                      <ChevronRight className="size-4" />
+                    </DataTableCell>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </DataTableBody>
+            </DataTableRoot>
+          </DataTableScroll>
+        </DataTableShell>
       )}
-    </main>
+    </div>
   )
 }

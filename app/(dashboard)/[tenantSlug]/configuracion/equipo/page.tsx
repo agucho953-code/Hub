@@ -1,5 +1,7 @@
+import { Mail, UsersRound } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { createClient } from '@/lib/supabase/server'
 import {
   RoleRequiredError,
@@ -12,7 +14,7 @@ import { InvitationRow } from './_invitation-row'
 import { InviteForm } from './_invite-form'
 import { MemberRow } from './_member-row'
 
-export const metadata = { title: 'Equipo — HUB' }
+export const metadata = { title: 'Equipo' }
 
 type MembershipRow = {
   id: string
@@ -57,45 +59,59 @@ export default async function EquipoPage({ params }: { params: Promise<{ tenantS
     .order('created_at', { ascending: false })
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Equipo</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Configuración"
+        title="Equipo"
+        description="Invitá a tu staff y asigná roles. Los cajeros y mozos ven solo lo operativo."
+      />
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Invitar miembro</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <InviteForm tenantSlug={tenantSlug} />
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Miembros ({members?.length ?? 0})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col divide-y">
-            {(members ?? []).map((m: MembershipRow) => (
-              <MemberRow key={m.id} member={m} tenantSlug={tenantSlug} />
-            ))}
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Invitaciones pendientes ({invitations?.length ?? 0})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col divide-y">
-            {(invitations ?? []).length === 0 ? (
-              <p className="text-sm text-muted-foreground">No hay invitaciones pendientes.</p>
-            ) : (
-              (invitations ?? []).map((inv: InvitationRowData) => (
-                <InvitationRow key={inv.id} invitation={inv} tenantSlug={tenantSlug} />
-              ))
-            )}
-          </CardContent>
-        </Card>
+      <div className="card-hairline rounded-xl border bg-card p-5">
+        <h2 className="font-display text-sm font-semibold tracking-tight">Invitar miembro</h2>
+        <p className="text-xs text-muted-foreground">
+          Vamos a generarte un link único para enviárselo. El link expira en 7 días.
+        </p>
+        <div className="mt-4">
+          <InviteForm tenantSlug={tenantSlug} />
+        </div>
       </div>
-    </main>
+
+      <section className="space-y-3">
+        <header className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-display text-sm font-semibold tracking-tight">
+            <UsersRound className="size-4 text-muted-foreground" />
+            Miembros <span className="text-muted-foreground">({members?.length ?? 0})</span>
+          </h2>
+        </header>
+        <div className="card-hairline divide-y divide-border/60 overflow-hidden rounded-xl border bg-card">
+          {(members ?? []).map((m: MembershipRow) => (
+            <MemberRow key={m.id} member={m} tenantSlug={tenantSlug} />
+          ))}
+        </div>
+      </section>
+
+      <section className="space-y-3">
+        <header className="flex items-center justify-between gap-2">
+          <h2 className="flex items-center gap-2 font-display text-sm font-semibold tracking-tight">
+            <Mail className="size-4 text-muted-foreground" />
+            Invitaciones pendientes{' '}
+            <span className="text-muted-foreground">({invitations?.length ?? 0})</span>
+          </h2>
+        </header>
+        {(invitations ?? []).length === 0 ? (
+          <EmptyState
+            icon={Mail}
+            title="Sin invitaciones pendientes"
+            description="Cuando invites a alguien, va a aparecer acá hasta que acepte."
+          />
+        ) : (
+          <div className="card-hairline divide-y divide-border/60 overflow-hidden rounded-xl border bg-card">
+            {(invitations ?? []).map((inv: InvitationRowData) => (
+              <InvitationRow key={inv.id} invitation={inv} tenantSlug={tenantSlug} />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   )
 }

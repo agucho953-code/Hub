@@ -1,5 +1,6 @@
 'use client'
 
+import { Send } from 'lucide-react'
 import { useActionState, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
@@ -20,7 +21,8 @@ const initial: ActionState = { ok: true }
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="gap-1.5">
+      <Send className="size-3.5" />
       {pending ? 'Generando…' : 'Invitar'}
     </Button>
   )
@@ -42,7 +44,7 @@ export function InviteForm({ tenantSlug }: { tenantSlug: string }) {
   }, [state])
 
   return (
-    <form action={formAction} className="grid gap-3 sm:grid-cols-[1fr_auto_auto]">
+    <form action={formAction} className="grid gap-3 sm:grid-cols-[1fr_140px_auto] sm:items-end">
       <div className="grid gap-1.5">
         <Label htmlFor="email">Email</Label>
         <Input
@@ -57,7 +59,7 @@ export function InviteForm({ tenantSlug }: { tenantSlug: string }) {
       <div className="grid gap-1.5">
         <Label htmlFor="role">Rol</Label>
         <Select name="role" defaultValue="cashier">
-          <SelectTrigger id="role" className="w-32">
+          <SelectTrigger id="role">
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
@@ -67,9 +69,7 @@ export function InviteForm({ tenantSlug }: { tenantSlug: string }) {
           </SelectContent>
         </Select>
       </div>
-      <div className="self-end">
-        <SubmitButton />
-      </div>
+      <SubmitButton />
     </form>
   )
 }

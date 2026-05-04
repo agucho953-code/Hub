@@ -1,9 +1,10 @@
 'use client'
 
+import { Phone, Search, Sparkles, UserPlus } from 'lucide-react'
 import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Dialog,
   DialogContent,
@@ -13,6 +14,7 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Skeleton } from '@/components/ui/skeleton'
 import { createCustomer } from '@/lib/customers/actions'
 import { type CustomerSearchResult, searchCustomers } from '@/lib/customers/search'
 import { formatPhoneForDisplay } from '@/lib/phone'
@@ -52,87 +54,140 @@ export function CustomerStep({
     }
   }, [query, tenantSlug])
 
+  const empty = query.trim().length < 2
+  const noResults = !empty && !searching && results.length === 0
+
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle>Buscar cliente</CardTitle>
-      </CardHeader>
-      <CardContent className="space-y-3">
-        <Input
-          placeholder="Nombre, apellido o teléfono…"
+    <div className="card-hairline rounded-xl border bg-card p-5 sm:p-6">
+      <div className="space-y-1">
+        <h2 className="font-display text-lg font-semibold tracking-tight">
+          ¿Quién está en la mesa?
+        </h2>
+        <p className="text-sm text-muted-foreground">
+          Buscá por nombre, apellido o teléfono. Si es nuevo, lo creás en el momento.
+        </p>
+      </div>
+
+      <label className="relative mt-5 flex items-center">
+        <Search className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+        <input
+          type="search"
+          placeholder="Empezá a escribir…"
           value={query}
           onChange={(e) => setQuery(e.target.value)}
+          // biome-ignore lint/a11y/noAutofocus: paso 1 del wizard, foco inmediato en buscador
           autoFocus
+          className="h-11 w-full rounded-lg border border-border/60 bg-background/40 pl-9 pr-3 text-base shadow-none outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/40"
         />
+      </label>
 
-        <div className="divide-y rounded-md border">
-          {searching ? (
-            <div className="px-3 py-3 text-sm text-muted-foreground">Buscando…</div>
-          ) : results.length === 0 && query.trim().length >= 2 ? (
-            <div className="px-3 py-3 text-sm text-muted-foreground">Sin resultados.</div>
-          ) : results.length === 0 ? (
-            <div className="px-3 py-3 text-sm text-muted-foreground">
-              Empezá a escribir para buscar.
-            </div>
-          ) : (
-            results.map((c) => (
-              <button
-                key={c.id}
-                type="button"
-                onClick={() => onSelect(c)}
-                className="flex w-full items-center justify-between px-3 py-2.5 text-left hover:bg-muted/50"
-              >
-                <div>
-                  <div className="font-medium">
-                    {c.first_name} {c.last_name}
-                  </div>
-                  <div className="font-mono text-xs text-muted-foreground">
-                    {formatPhoneForDisplay(c.phone)}
-                  </div>
+      <div className="mt-4 overflow-hidden rounded-lg border border-border/60 bg-background/30">
+        {searching ? (
+          <div className="space-y-1 p-3">
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={`s-${i.toString()}`} className="flex items-center gap-3 px-2 py-2">
+                <Skeleton className="size-9 rounded-full" />
+                <div className="flex-1 space-y-1.5">
+                  <Skeleton className="h-3.5 w-32" />
+                  <Skeleton className="h-3 w-24" />
                 </div>
-                <div className="text-xs text-muted-foreground">{c.points_balance} pts</div>
-              </button>
-            ))
-          )}
-        </div>
+                <Skeleton className="h-4 w-12" />
+              </div>
+            ))}
+          </div>
+        ) : empty ? (
+          <div className="flex items-center gap-2 px-4 py-6 text-sm text-muted-foreground">
+            <Sparkles className="size-4 text-primary" />
+            Empezá a escribir para encontrar al cliente.
+          </div>
+        ) : noResults ? (
+          <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
+            <p className="text-sm font-medium">Sin resultados para “{query}”</p>
+            <p className="text-xs text-muted-foreground">
+              Creá un cliente nuevo si no está registrado.
+            </p>
+            <Button onClick={() => setNewOpen(true)} className="mt-2 gap-2" size="sm">
+              <UserPlus className="size-3.5" />
+              Crear “{query}”
+            </Button>
+          </div>
+        ) : (
+          <ul className="divide-y divide-border/60">
+            {results.map((c) => {
+              const initials =
+                `${c.first_name?.[0] ?? ''}${c.last_name?.[0] ?? ''}`.toUpperCase() || '?'
+              return (
+                <li key={c.id}>
+                  <button
+                    type="button"
+                    onClick={() => onSelect(c)}
+                    className="flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors hover:bg-secondary/40"
+                  >
+                    <Avatar className="size-9">
+                      <AvatarFallback className="bg-secondary text-xs font-semibold">
+                        {initials}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-sm font-medium">
+                        {c.first_name} {c.last_name}
+                      </p>
+                      <p className="flex items-center gap-1 truncate font-mono text-[11px] text-muted-foreground">
+                        <Phone className="size-3" />
+                        {formatPhoneForDisplay(c.phone)}
+                      </p>
+                    </div>
+                    <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold tabular-nums text-primary">
+                      {c.points_balance} pts
+                    </span>
+                  </button>
+                </li>
+              )
+            })}
+          </ul>
+        )}
+      </div>
 
-        <div className="flex items-center justify-between">
-          <Button variant="outline" onClick={() => setNewOpen(true)}>
-            + Nuevo cliente
-          </Button>
-          {selected ? (
-            <span className="text-sm text-muted-foreground">
-              Seleccionado: <strong>{selected.first_name}</strong>
-            </span>
-          ) : null}
-        </div>
-
-        {newOpen ? (
-          <NewCustomerDialog
-            tenantSlug={tenantSlug}
-            onClose={() => setNewOpen(false)}
-            onCreated={(c) => {
-              setNewOpen(false)
-              onSelect(c)
-            }}
-          />
+      <div className="mt-4 flex flex-wrap items-center justify-between gap-2">
+        <Button variant="outline" onClick={() => setNewOpen(true)} className="gap-2">
+          <UserPlus className="size-4" />
+          Nuevo cliente
+        </Button>
+        {selected ? (
+          <span className="text-xs text-muted-foreground">
+            Seleccionado: <strong className="text-foreground">{selected.first_name}</strong>
+          </span>
         ) : null}
-      </CardContent>
-    </Card>
+      </div>
+
+      {newOpen ? (
+        <NewCustomerDialog
+          tenantSlug={tenantSlug}
+          initialName={query}
+          onClose={() => setNewOpen(false)}
+          onCreated={(c) => {
+            setNewOpen(false)
+            onSelect(c)
+          }}
+        />
+      ) : null}
+    </div>
   )
 }
 
 function NewCustomerDialog({
   tenantSlug,
+  initialName,
   onClose,
   onCreated,
 }: {
   tenantSlug: string
+  initialName: string
   onClose: () => void
   onCreated: (c: WizardCustomer) => void
 }) {
   const [phone, setPhone] = useState('')
-  const [first, setFirst] = useState('')
+  const [first, setFirst] = useState(initialName)
   const [last, setLast] = useState('')
   const [pending, start] = useTransition()
 
@@ -164,7 +219,7 @@ function NewCustomerDialog({
         <DialogHeader>
           <DialogTitle>Nuevo cliente</DialogTitle>
         </DialogHeader>
-        <form onSubmit={onSubmit} className="grid gap-3">
+        <form onSubmit={onSubmit} className="grid gap-4">
           <div className="grid gap-1.5">
             <Label htmlFor="nc-phone">Teléfono</Label>
             <Input

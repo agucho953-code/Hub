@@ -16,7 +16,7 @@ const initial: EventActionState = { ok: true }
 function SubmitBtn() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="min-w-[140px]">
       {pending ? 'Creando…' : 'Crear evento'}
     </Button>
   )
@@ -37,15 +37,28 @@ export function NewEventForm({ tenantSlug }: { tenantSlug: string }) {
   }, [state, router, tenantSlug])
 
   return (
-    <form action={formAction} encType="multipart/form-data" className="grid gap-4">
+    <form action={formAction} encType="multipart/form-data" className="grid gap-5">
       <div className="grid gap-1.5">
         <Label htmlFor="name">Nombre</Label>
-        <Input id="name" name="name" required maxLength={120} />
+        <Input
+          id="name"
+          name="name"
+          required
+          maxLength={120}
+          placeholder="Peña folklórica · Septiembre"
+        />
       </div>
 
       <div className="grid gap-1.5">
         <Label htmlFor="description">Descripción</Label>
-        <Textarea id="description" name="description" maxLength={2000} rows={3} />
+        <Textarea
+          id="description"
+          name="description"
+          maxLength={2000}
+          rows={4}
+          placeholder="Detalles del evento, qué incluye, código de vestimenta…"
+          className="resize-none"
+        />
       </div>
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -59,20 +72,20 @@ export function NewEventForm({ tenantSlug }: { tenantSlug: string }) {
         </div>
       </div>
 
-      <div className="grid gap-3 sm:grid-cols-2">
+      <div className="grid gap-3 sm:grid-cols-[180px_1fr]">
         <div className="grid gap-1.5">
           <Label htmlFor="capacity">Capacidad</Label>
-          <Input
-            id="capacity"
-            name="capacity"
-            type="number"
-            min={1}
-            placeholder="Vacío = ilimitado"
-          />
+          <Input id="capacity" name="capacity" type="number" min={1} placeholder="Ilimitada" />
+          <p className="text-[11px] text-muted-foreground">Vacío = sin límite</p>
         </div>
-        <Label className="flex items-center gap-2 self-end rounded-md border p-3">
-          <Checkbox name="waitlist_enabled" defaultChecked />
-          <span className="text-sm">Habilitar lista de espera</span>
+        <Label className="flex items-center gap-3 self-start rounded-lg border border-border/60 bg-background/40 p-3 sm:mt-7">
+          <Checkbox name="waitlist_enabled" defaultChecked className="mt-0" />
+          <div className="space-y-0.5">
+            <span className="text-sm font-medium leading-none">Lista de espera</span>
+            <span className="block text-xs text-muted-foreground">
+              Permite anotarse cuando se llene el cupo.
+            </span>
+          </div>
         </Label>
       </div>
 

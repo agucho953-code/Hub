@@ -1,5 +1,7 @@
+import { UtensilsCrossed } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { listMenu } from '@/lib/menu/queries'
 import {
   RoleRequiredError,
@@ -10,7 +12,7 @@ import {
 import { MenuBoard } from './_components/menu-board'
 import { NewCategoryForm } from './_components/new-category-form'
 
-export const metadata = { title: 'Menú — HUB' }
+export const metadata = { title: 'Menú' }
 
 export default async function MenuPage({ params }: { params: Promise<{ tenantSlug: string }> }) {
   const { tenantSlug } = await params
@@ -26,21 +28,35 @@ export default async function MenuPage({ params }: { params: Promise<{ tenantSlu
   }
 
   const { categories, items } = await listMenu({ tenantId: access.tenant.id })
+  const totalItems = items.length
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Menú</h1>
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Configuración"
+        title="Menú"
+        description={`${categories.length} categoría${categories.length === 1 ? '' : 's'} · ${totalItems} ítem${totalItems === 1 ? '' : 's'}. Arrastrá para reordenar.`}
+      />
 
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>Nueva categoría</CardTitle>
-        </CardHeader>
-        <CardContent>
+      <div className="card-hairline rounded-xl border bg-card p-5">
+        <h2 className="font-display text-sm font-semibold tracking-tight">Nueva categoría</h2>
+        <p className="text-xs text-muted-foreground">
+          Las categorías agrupan ítems en el wizard de cierre de mesa.
+        </p>
+        <div className="mt-4">
           <NewCategoryForm tenantSlug={tenantSlug} />
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      <MenuBoard tenantSlug={tenantSlug} categories={categories} items={items} />
-    </main>
+      {categories.length === 0 ? (
+        <EmptyState
+          icon={UtensilsCrossed}
+          title="Empezá creando una categoría"
+          description="Por ejemplo: Tragos, Comida, Postres. Después agregás los ítems en cada una."
+        />
+      ) : (
+        <MenuBoard tenantSlug={tenantSlug} categories={categories} items={items} />
+      )}
+    </div>
   )
 }

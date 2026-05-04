@@ -1,4 +1,7 @@
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { PageHeader } from '@/components/ui/page-header'
 import { listActiveMenu } from '@/lib/menu/queries'
 import { listRules } from '@/lib/points/queries'
 import {
@@ -9,7 +12,7 @@ import {
 } from '@/lib/tenant'
 import { CloseTableWizard } from './_components/wizard'
 
-export const metadata = { title: 'Cerrar mesa — HUB' }
+export const metadata = { title: 'Cerrar mesa' }
 
 export default async function NuevaVisitaPage({
   params,
@@ -34,14 +37,25 @@ export default async function NuevaVisitaPage({
   ])
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-6">
-      <h1 className="mb-4 text-2xl font-semibold">Cerrar mesa</h1>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver al resumen
+      </Link>
+      <PageHeader
+        eyebrow="Operación"
+        title="Cerrar mesa"
+        description="Identificá al cliente, cargá el consumo y otorgá los puntos en pocos toques."
+      />
       <CloseTableWizard
         tenantSlug={tenantSlug}
         categories={menu.categories}
         items={menu.items}
         rules={rules}
       />
-    </main>
+    </div>
   )
 }

@@ -1,18 +1,12 @@
 'use client'
 
+import { ArrowRight, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
+import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
 import { Button } from '@/components/ui/button'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { slugify } from '@/lib/tenant/slugify'
@@ -23,8 +17,9 @@ const initialState: CreateTenantState = { status: 'idle' }
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending} className="w-full">
-      {pending ? 'Creando…' : 'Crear bar'}
+    <Button type="submit" disabled={pending} className="w-full gap-2" size="lg">
+      {pending ? 'Creando bar…' : 'Crear mi bar'}
+      {!pending ? <ArrowRight className="size-4" /> : null}
     </Button>
   )
 }
@@ -49,15 +44,27 @@ export function OnboardingForm() {
   }, [state, router])
 
   return (
-    <Card className="w-full max-w-md">
-      <CardHeader>
-        <CardTitle>Creá tu bar</CardTitle>
-        <CardDescription>Esto va a ser tu espacio en HUB.</CardDescription>
-      </CardHeader>
-      <form action={formAction}>
-        <CardContent className="flex flex-col gap-4">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="name">Nombre</Label>
+    <div className="space-y-6">
+      <div className="flex items-center justify-center gap-2.5">
+        <BrandMark className="size-9" />
+        <BrandWordmark className="text-base" />
+      </div>
+
+      <div className="card-hairline relative overflow-hidden rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
+        <div className="space-y-1.5 text-center">
+          <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
+            <Sparkles className="size-3" />
+            Empezá tu bar
+          </p>
+          <h1 className="font-display text-2xl font-semibold tracking-tight">Creá tu bar en HUB</h1>
+          <p className="text-sm text-muted-foreground text-balance">
+            Tu nombre y un slug bonito. El resto lo configurás en 5 minutos.
+          </p>
+        </div>
+
+        <form action={formAction} className="mt-6 space-y-4">
+          <div className="grid gap-1.5">
+            <Label htmlFor="name">Nombre del bar</Label>
             <Input
               id="name"
               name="name"
@@ -68,32 +75,37 @@ export function OnboardingForm() {
               onChange={(e) => setName(e.target.value)}
               placeholder="Bar HUB"
               autoComplete="off"
+              className="h-11"
             />
           </div>
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="slug">Slug (URL)</Label>
-            <Input
-              id="slug"
-              name="slug"
-              required
-              pattern="[a-z0-9-]{2,40}"
-              value={slug}
-              onChange={(e) => {
-                setSlug(e.target.value)
-                setSlugTouched(true)
-              }}
-              placeholder="bar-hub"
-              autoComplete="off"
-            />
-            <p className="text-xs text-muted-foreground">
-              Tu URL va a ser <code>/{slug || 'tu-slug'}</code>. Solo minúsculas, números y guiones.
+          <div className="grid gap-1.5">
+            <Label htmlFor="slug">URL del bar</Label>
+            <div className="flex items-center rounded-lg border border-input bg-background/40 focus-within:border-ring focus-within:ring-2 focus-within:ring-ring/40">
+              <span className="border-r border-border/60 px-3 py-2.5 text-sm text-muted-foreground">
+                hub.com/
+              </span>
+              <input
+                id="slug"
+                name="slug"
+                required
+                pattern="[a-z0-9-]{2,40}"
+                value={slug}
+                onChange={(e) => {
+                  setSlug(e.target.value)
+                  setSlugTouched(true)
+                }}
+                placeholder="bar-hub"
+                autoComplete="off"
+                className="h-11 flex-1 bg-transparent px-3 text-sm font-mono outline-none"
+              />
+            </div>
+            <p className="text-[11px] text-muted-foreground">
+              Solo minúsculas, números y guiones. Lo podés cambiar después.
             </p>
           </div>
-        </CardContent>
-        <CardFooter>
           <SubmitButton />
-        </CardFooter>
-      </form>
-    </Card>
+        </form>
+      </div>
+    </div>
   )
 }

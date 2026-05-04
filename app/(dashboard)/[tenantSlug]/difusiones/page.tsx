@@ -1,16 +1,19 @@
+import { ChevronRight, Megaphone, Plus } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRoot,
+  DataTableScroll,
+  DataTableShell,
+} from '@/components/ui/data-table'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { listBroadcasts } from '@/lib/broadcasts/queries'
 import {
   RoleRequiredError,
@@ -20,7 +23,7 @@ import {
 } from '@/lib/tenant'
 import type { BroadcastStatus } from '@/types/database'
 
-export const metadata = { title: 'Difusiones — HUB' }
+export const metadata = { title: 'Difusiones' }
 export const dynamic = 'force-dynamic'
 
 const STATUS_LABEL: Record<BroadcastStatus, string> = {
@@ -58,63 +61,104 @@ export default async function DifusionesPage({
   const broadcasts = await listBroadcasts(access.tenant.id)
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 p-4">
-      <header className="flex items-start justify-between gap-4">
-        <h1 className="text-2xl font-semibold">Difusiones</h1>
-        <Button asChild>
-          <Link href={`/${tenantSlug}/difusiones/nueva`}>Nueva difusión</Link>
-        </Button>
-      </header>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Marketing"
+        title="Difusiones"
+        description="Mandá un template aprobado a una audiencia. Programá envíos o despachá ahora mismo."
+        actions={
+          <Button asChild className="gap-2">
+            <Link href={`/${tenantSlug}/difusiones/nueva`}>
+              <Plus className="size-4" />
+              Nueva difusión
+            </Link>
+          </Button>
+        }
+      />
 
       {broadcasts.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Todavía no hay difusiones.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={Megaphone}
+          title="Aún no hay difusiones"
+          description="Para mandar un broadcast, primero conectá un canal y aprobá al menos un template en Meta."
+          action={
+            <Button asChild className="gap-2">
+              <Link href={`/${tenantSlug}/difusiones/nueva`}>
+                <Plus className="size-4" />
+                Crear primera difusión
+              </Link>
+            </Button>
+          }
+        />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Programada</TableHead>
-                  <TableHead>Stats</TableHead>
-                  <TableHead aria-label="acciones" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <DataTableShell>
+          <DataTableScroll>
+            <DataTableRoot>
+              <DataTableHead>
+                <tr>
+                  <DataTableHeader>Nombre</DataTableHeader>
+                  <DataTableHeader>Estado</DataTableHeader>
+                  <DataTableHeader>Programada</DataTableHeader>
+                  <DataTableHeader>Progreso</DataTableHeader>
+                  <DataTableHeader className="w-8" />
+                </tr>
+              </DataTableHead>
+              <DataTableBody>
                 {broadcasts.map((b) => {
                   const total = b.stats.total ?? 0
                   const sent = b.stats.sent ?? 0
                   const failed = b.stats.failed ?? 0
+                  const pct = total > 0 ? Math.round((sent / total) * 100) : 0
                   return (
-                    <TableRow key={b.id}>
-                      <TableCell className="font-medium">{b.name}</TableCell>
-                      <TableCell>
+                    <tr key={b.id} className="group transition-colors hover:bg-secondary/40">
+                      <DataTableCell>
+                        <Link
+                          href={`/${tenantSlug}/difusiones/${b.id}`}
+                          className="font-medium group-hover:text-primary"
+                        >
+                          {b.name}
+                        </Link>
+                      </DataTableCell>
+                      <DataTableCell>
                         <Badge variant={statusVariant(b.status)}>{STATUS_LABEL[b.status]}</Badge>
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {b.scheduled_at ? new Date(b.scheduled_at).toLocaleString('es-AR') : '—'}
-                      </TableCell>
-                      <TableCell className="text-muted-foreground">
-                        {sent}/{total} {failed > 0 ? `(${failed} fallidos)` : ''}
-                      </TableCell>
-                      <TableCell className="text-right">
-                        <Button asChild variant="ghost" size="sm">
-                          <Link href={`/${tenantSlug}/difusiones/${b.id}`}>Ver</Link>
-                        </Button>
-                      </TableCell>
-                    </TableRow>
+                      </DataTableCell>
+                      <DataTableCell className="text-xs text-muted-foreground">
+                        {b.scheduled_at
+                          ? new Date(b.scheduled_at).toLocaleString('es-AR', {
+                              dateStyle: 'short',
+                              timeStyle: 'short',
+                            })
+                          : '—'}
+                      </DataTableCell>
+                      <DataTableCell>
+                        <div className="flex items-center gap-2">
+                          <div className="h-1.5 w-20 overflow-hidden rounded-full bg-secondary/60">
+                            <div
+                              className="h-full rounded-full bg-primary transition-all"
+                              style={{ width: `${pct}%` }}
+                            />
+                          </div>
+                          <span className="text-xs tabular-nums text-muted-foreground">
+                            {sent}/{total}
+                          </span>
+                          {failed > 0 ? (
+                            <Badge variant="destructive" className="text-[10px]">
+                              {failed} fallidos
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </DataTableCell>
+                      <DataTableCell className="text-muted-foreground/40 group-hover:text-muted-foreground">
+                        <ChevronRight className="size-4" />
+                      </DataTableCell>
+                    </tr>
                   )
                 })}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </DataTableBody>
+            </DataTableRoot>
+          </DataTableScroll>
+        </DataTableShell>
       )}
-    </main>
+    </div>
   )
 }

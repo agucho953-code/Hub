@@ -1,5 +1,6 @@
 'use client'
 
+import { Plug, RefreshCw, Unplug } from 'lucide-react'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import {
@@ -48,22 +49,29 @@ export function ChannelCardActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button asChild variant="outline">
+      <Button asChild variant="outline" className="gap-1.5">
         <a href={`/api/meta/${type}/connect?tenant=${encodeURIComponent(tenantSlug)}`}>
+          <Plug className="size-4" />
           Reconectar
         </a>
       </Button>
       {type === 'whatsapp' ? (
         <form action={syncAction}>
           <input type="hidden" name="channel_id" value={channelId} />
-          <Button type="submit" variant="outline" disabled={syncPending}>
+          <Button type="submit" variant="outline" disabled={syncPending} className="gap-1.5">
+            <RefreshCw className={`size-4 ${syncPending ? 'animate-spin' : ''}`} />
             {syncPending ? 'Sincronizando…' : 'Sincronizar templates'}
           </Button>
         </form>
       ) : null}
       <AlertDialog>
         <AlertDialogTrigger asChild>
-          <Button variant="destructive" disabled={disconnectPending}>
+          <Button
+            variant="ghost"
+            disabled={disconnectPending}
+            className="gap-1.5 text-muted-foreground hover:text-destructive"
+          >
+            <Unplug className="size-4" />
             Desconectar
           </Button>
         </AlertDialogTrigger>
@@ -78,7 +86,12 @@ export function ChannelCardActions({
             <AlertDialogCancel>Cancelar</AlertDialogCancel>
             <form action={disconnectAction}>
               <input type="hidden" name="channel_id" value={channelId} />
-              <AlertDialogAction type="submit">Desconectar</AlertDialogAction>
+              <AlertDialogAction
+                type="submit"
+                className="bg-destructive text-white hover:bg-destructive/90"
+              >
+                Desconectar
+              </AlertDialogAction>
             </form>
           </AlertDialogFooter>
         </AlertDialogContent>

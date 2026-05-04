@@ -17,7 +17,7 @@ export function EventsTabs({
   showDrafts: boolean
 }) {
   return (
-    <nav className="mb-4 flex gap-2 border-b">
+    <nav className="flex gap-1 rounded-xl border border-border/60 bg-card/40 p-1 w-fit">
       {items
         .filter((it) => !it.ownerOnly || showDrafts)
         .map((it) => {
@@ -27,10 +27,10 @@ export function EventsTabs({
               key={it.key}
               href={`/${tenantSlug}/eventos?tab=${it.key}`}
               className={cn(
-                '-mb-px border-b-2 px-3 py-2 text-sm transition-colors',
+                'rounded-lg px-3.5 py-1.5 text-sm font-medium transition-colors',
                 active
-                  ? 'border-primary font-medium text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground',
+                  ? 'bg-card text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
               {it.label}

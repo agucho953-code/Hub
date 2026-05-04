@@ -1,5 +1,6 @@
 'use client'
 
+import { Gift, Lock, PackageX, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -14,6 +15,7 @@ import {
   AlertDialogTitle,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
+import { EmptyState } from '@/components/ui/empty-state'
 import { validateRedeem } from '@/lib/points/engine'
 import type { Reward } from '@/lib/points/queries'
 import { redeemReward } from '@/lib/visits/actions'
@@ -35,9 +37,11 @@ export function RedeemForm({
 
   if (rewards.length === 0) {
     return (
-      <p className="py-6 text-center text-sm text-muted-foreground">
-        No hay recompensas activas. Pedile al owner que cree algunas.
-      </p>
+      <EmptyState
+        icon={Gift}
+        title="Sin recompensas activas"
+        description="Pedile al owner que cargue recompensas en Configuración → Puntos."
+      />
     )
   }
 
@@ -62,7 +66,7 @@ export function RedeemForm({
 
   return (
     <>
-      <ul className="divide-y rounded-md border">
+      <div className="grid gap-3 sm:grid-cols-2">
         {rewards.map((r) => {
           const validation = validateRedeem({
             balance,
@@ -71,32 +75,53 @@ export function RedeemForm({
           const disabled = !validation.ok
           const reason = !validation.ok ? validation.error : null
           return (
-            <li key={r.id} className="flex items-center gap-3 px-4 py-3">
-              <div className="min-w-0 flex-1">
-                <div className="font-medium">{r.name}</div>
-                {r.description ? (
-                  <div className="text-xs text-muted-foreground">{r.description}</div>
-                ) : null}
-                <div className="mt-1 text-xs text-muted-foreground">
-                  {r.cost_points} pts · {r.stock === null ? 'Stock ilimitado' : `Stock: ${r.stock}`}
+            <div
+              key={r.id}
+              className={`card-hairline relative flex flex-col rounded-xl border bg-card p-5 transition-all ${disabled ? 'opacity-70' : 'hover:border-primary/40'}`}
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex size-10 items-center justify-center rounded-lg bg-primary/15 text-primary">
+                  <Gift className="size-5" />
                 </div>
+                <span className="rounded-full bg-secondary px-2.5 py-1 text-xs font-semibold tabular-nums">
+                  {r.cost_points} pts
+                </span>
+              </div>
+              <h3 className="mt-3 font-display text-base font-semibold tracking-tight">{r.name}</h3>
+              {r.description ? (
+                <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{r.description}</p>
+              ) : null}
+              <div className="mt-3 flex items-center justify-between text-[11px] text-muted-foreground">
+                <span>{r.stock === null ? 'Stock ilimitado' : `Stock: ${r.stock}`}</span>
               </div>
               <Button
                 size="sm"
                 disabled={disabled}
                 onClick={() => setConfirming(r)}
-                title={reason === 'insufficient_balance' ? 'Faltan puntos' : undefined}
+                className="mt-4 w-full gap-1.5"
+                variant={disabled ? 'outline' : 'default'}
               >
-                {reason === 'insufficient_balance'
-                  ? `Faltan ${r.cost_points - balance}`
-                  : reason === 'out_of_stock'
-                    ? 'Sin stock'
-                    : 'Canjear'}
+                {reason === 'insufficient_balance' ? (
+                  <>
+                    <Lock className="size-3.5" />
+                    Faltan {r.cost_points - balance}
+                  </>
+                ) : reason === 'out_of_stock' ? (
+                  <>
+                    <PackageX className="size-3.5" />
+                    Sin stock
+                  </>
+                ) : (
+                  <>
+                    <Sparkles className="size-3.5" />
+                    Canjear
+                  </>
+                )}
               </Button>
-            </li>
+            </div>
           )
         })}
-      </ul>
+      </div>
 
       <AlertDialog open={confirming !== null} onOpenChange={(o) => !o && setConfirming(null)}>
         <AlertDialogContent>

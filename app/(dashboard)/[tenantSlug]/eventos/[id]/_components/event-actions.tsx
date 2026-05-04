@@ -1,5 +1,6 @@
 'use client'
 
+import { Ban, CheckCircle2, Send } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -15,7 +16,6 @@ import {
   AlertDialogTrigger,
 } from '@/components/ui/alert-dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import { cancelEvent, finishEvent, publishEvent } from '@/lib/events/actions'
 import type { EventStatus } from '@/types/database'
 
@@ -62,43 +62,52 @@ export function EventActions({
   }
 
   return (
-    <Card>
-      <CardContent className="flex flex-col gap-2 p-4">
-        {event.status === 'draft' ? (
-          <Button onClick={onPublish} disabled={pending}>
-            {pending ? '…' : 'Publicar'}
-          </Button>
-        ) : null}
-        {event.status === 'published' ? (
-          <Button variant="outline" onClick={onFinish} disabled={pending}>
-            Finalizar
-          </Button>
-        ) : null}
-        {event.status === 'draft' || event.status === 'published' ? (
-          <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
-            <AlertDialogTrigger asChild>
-              <Button variant="ghost" disabled={pending}>
-                Cancelar evento
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>¿Cancelar el evento?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  Todas las reservas confirmadas y en waitlist quedarán como canceladas. Avisá a los
-                  clientes manualmente.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel disabled={pending}>Volver</AlertDialogCancel>
-                <AlertDialogAction onClick={onCancel} disabled={pending}>
-                  Sí, cancelar
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
-        ) : null}
-      </CardContent>
-    </Card>
+    <div className="card-hairline rounded-xl border bg-card p-3 space-y-2">
+      {event.status === 'draft' ? (
+        <Button onClick={onPublish} disabled={pending} className="w-full gap-2">
+          <Send className="size-4" />
+          {pending ? 'Publicando…' : 'Publicar evento'}
+        </Button>
+      ) : null}
+      {event.status === 'published' ? (
+        <Button variant="outline" onClick={onFinish} disabled={pending} className="w-full gap-2">
+          <CheckCircle2 className="size-4" />
+          Finalizar
+        </Button>
+      ) : null}
+      {event.status === 'draft' || event.status === 'published' ? (
+        <AlertDialog open={confirmCancel} onOpenChange={setConfirmCancel}>
+          <AlertDialogTrigger asChild>
+            <Button
+              variant="ghost"
+              disabled={pending}
+              className="w-full gap-2 text-muted-foreground hover:text-destructive"
+            >
+              <Ban className="size-4" />
+              Cancelar evento
+            </Button>
+          </AlertDialogTrigger>
+          <AlertDialogContent>
+            <AlertDialogHeader>
+              <AlertDialogTitle>¿Cancelar el evento?</AlertDialogTitle>
+              <AlertDialogDescription>
+                Todas las reservas confirmadas y en waitlist quedarán como canceladas. Avisá a los
+                clientes manualmente.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel disabled={pending}>Volver</AlertDialogCancel>
+              <AlertDialogAction
+                onClick={onCancel}
+                disabled={pending}
+                className="bg-destructive text-white hover:bg-destructive/90"
+              >
+                Sí, cancelar
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      ) : null}
+    </div>
   )
 }

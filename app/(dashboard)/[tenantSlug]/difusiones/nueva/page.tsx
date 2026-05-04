@@ -1,4 +1,7 @@
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { PageHeader } from '@/components/ui/page-header'
 import { createClient } from '@/lib/supabase/server'
 import {
   RoleRequiredError,
@@ -8,7 +11,7 @@ import {
 } from '@/lib/tenant'
 import { BroadcastForm } from '../_components/broadcast-form'
 
-export const metadata = { title: 'Nueva difusión — HUB' }
+export const metadata = { title: 'Nueva difusión' }
 export const dynamic = 'force-dynamic'
 
 export default async function NuevaDifusionPage({
@@ -48,14 +51,25 @@ export default async function NuevaDifusionPage({
   ])
 
   return (
-    <main className="mx-auto w-full max-w-2xl space-y-6 p-4">
-      <h1 className="text-2xl font-semibold">Nueva difusión</h1>
+    <div className="mx-auto w-full max-w-3xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}/difusiones`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver a difusiones
+      </Link>
+      <PageHeader
+        eyebrow="Marketing"
+        title="Nueva difusión"
+        description="Elegí canal, template y audiencia. Programá el envío o despachá ahora."
+      />
       <BroadcastForm
         tenantSlug={tenantSlug}
         channels={channelsRes.data ?? []}
         templates={templatesRes.data ?? []}
         audiences={audiencesRes.data ?? []}
       />
-    </main>
+    </div>
   )
 }

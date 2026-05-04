@@ -1,5 +1,6 @@
+import { Gift, Star } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import { listMenu } from '@/lib/menu/queries'
 import { listRewards, listRules } from '@/lib/points/queries'
 import {
@@ -14,7 +15,7 @@ import { NewRewardForm } from './_components/new-reward-form'
 import { RewardsList } from './_components/rewards-list'
 import { RulesList } from './_components/rules-list'
 
-export const metadata = { title: 'Puntos — HUB' }
+export const metadata = { title: 'Puntos' }
 
 export default async function PuntosPage({ params }: { params: Promise<{ tenantSlug: string }> }) {
   const { tenantSlug } = await params
@@ -36,35 +37,36 @@ export default async function PuntosPage({ params }: { params: Promise<{ tenantS
   ])
 
   return (
-    <main className="mx-auto w-full max-w-5xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Puntos y recompensas</h1>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Configuración"
+        title="Puntos y recompensas"
+        description="Definí cómo se ganan los puntos y qué pueden canjear los clientes."
+      />
 
       <div className="grid gap-6 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Reglas de puntos</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <NewPerAmountForm tenantSlug={tenantSlug} />
-            <NewPerItemForm
-              tenantSlug={tenantSlug}
-              items={menu.items}
-              categories={menu.categories}
-            />
-            <RulesList tenantSlug={tenantSlug} rules={rules} menu={menu} />
-          </CardContent>
-        </Card>
+        <section className="space-y-4">
+          <header className="flex items-center gap-2">
+            <Star className="size-4 text-primary" />
+            <h2 className="font-display text-base font-semibold tracking-tight">
+              Reglas de puntos
+            </h2>
+          </header>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Recompensas</CardTitle>
-          </CardHeader>
-          <CardContent className="space-y-4">
-            <NewRewardForm tenantSlug={tenantSlug} />
-            <RewardsList tenantSlug={tenantSlug} rewards={rewards} />
-          </CardContent>
-        </Card>
+          <NewPerAmountForm tenantSlug={tenantSlug} />
+          <NewPerItemForm tenantSlug={tenantSlug} items={menu.items} categories={menu.categories} />
+          <RulesList tenantSlug={tenantSlug} rules={rules} menu={menu} />
+        </section>
+
+        <section className="space-y-4">
+          <header className="flex items-center gap-2">
+            <Gift className="size-4 text-primary" />
+            <h2 className="font-display text-base font-semibold tracking-tight">Recompensas</h2>
+          </header>
+          <NewRewardForm tenantSlug={tenantSlug} />
+          <RewardsList tenantSlug={tenantSlug} rewards={rewards} />
+        </section>
       </div>
-    </main>
+    </div>
   )
 }

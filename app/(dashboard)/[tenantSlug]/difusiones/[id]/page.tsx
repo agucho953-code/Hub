@@ -1,14 +1,18 @@
+import { ArrowLeft, CheckCircle2, Send, TriangleAlert, Users } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRoot,
+  DataTableScroll,
+  DataTableShell,
+} from '@/components/ui/data-table'
+import { PageHeader } from '@/components/ui/page-header'
+import { StatCard } from '@/components/ui/stat-card'
 import { getBroadcastDetail } from '@/lib/broadcasts/queries'
 import {
   RoleRequiredError,
@@ -18,7 +22,7 @@ import {
 } from '@/lib/tenant'
 import type { RecipientStatus } from '@/types/database'
 
-export const metadata = { title: 'Detalle difusión — HUB' }
+export const metadata = { title: 'Detalle difusión' }
 export const dynamic = 'force-dynamic'
 
 const RECIPIENT_LABEL: Record<RecipientStatus, string> = {
@@ -28,6 +32,13 @@ const RECIPIENT_LABEL: Record<RecipientStatus, string> = {
   read: 'Leído',
   replied: 'Respondió',
   failed: 'Falló',
+}
+
+function recipientVariant(s: RecipientStatus): 'default' | 'secondary' | 'destructive' | 'outline' {
+  if (s === 'failed') return 'destructive'
+  if (s === 'pending') return 'outline'
+  if (s === 'read' || s === 'replied') return 'default'
+  return 'secondary'
 }
 
 export default async function BroadcastDetailPage({
@@ -74,81 +85,107 @@ export default async function BroadcastDetailPage({
   const total = stats.total ?? 0
   const sent = stats.sent ?? 0
   const failed = stats.failed ?? 0
+  const pct = total > 0 ? Math.round((sent / total) * 100) : 0
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 p-4">
-      <header className="flex items-start justify-between gap-4">
-        <div>
-          <h1 className="text-2xl font-semibold">{b.name}</h1>
-          <p className="text-sm text-muted-foreground">
-            {channel?.display_name ?? channel?.type} · template {template?.name} · audiencia{' '}
-            {audience?.name}
-          </p>
-        </div>
-        <Badge variant="secondary" className="capitalize">
-          {b.status}
-        </Badge>
-      </header>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}/difusiones`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver a difusiones
+      </Link>
 
-      <div className="grid grid-cols-3 gap-4">
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Total</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{total}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Enviados</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{sent}</CardContent>
-        </Card>
-        <Card>
-          <CardHeader className="pb-2">
-            <CardTitle className="text-sm">Fallidos</CardTitle>
-          </CardHeader>
-          <CardContent className="text-2xl font-semibold">{failed}</CardContent>
-        </Card>
-      </div>
+      <PageHeader
+        eyebrow="Marketing · Difusión"
+        title={b.name}
+        description={
+          <span className="flex flex-wrap items-center gap-x-3 gap-y-1">
+            <span>
+              {channel?.display_name ?? channel?.type} · template{' '}
+              <strong className="text-foreground">{template?.name}</strong>
+            </span>
+            <span>·</span>
+            <span>
+              audiencia <strong className="text-foreground">{audience?.name}</strong>
+            </span>
+          </span>
+        }
+        actions={
+          <Badge variant="secondary" className="capitalize">
+            {b.status}
+          </Badge>
+        }
+      />
 
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-base">Recipients (últimos 200)</CardTitle>
-        </CardHeader>
-        <CardContent className="p-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Cliente</TableHead>
-                <TableHead>Teléfono</TableHead>
-                <TableHead>Estado</TableHead>
-                <TableHead>Enviado</TableHead>
-                <TableHead>Error</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <section className="grid gap-4 sm:grid-cols-3">
+        <StatCard
+          icon={Users}
+          label="Total"
+          value={total.toLocaleString('es-AR')}
+          hint="Recipients"
+        />
+        <StatCard
+          icon={Send}
+          label="Enviados"
+          value={sent.toLocaleString('es-AR')}
+          hint={`${pct}% del total`}
+        />
+        <StatCard
+          icon={failed > 0 ? TriangleAlert : CheckCircle2}
+          label="Fallidos"
+          value={failed.toLocaleString('es-AR')}
+          deltaTone={failed > 0 ? 'negative' : 'positive'}
+        />
+      </section>
+
+      <DataTableShell>
+        <header className="border-b border-border/60 px-5 py-4">
+          <h2 className="font-display text-base font-semibold tracking-tight">
+            Recipients <span className="text-muted-foreground">(últimos 200)</span>
+          </h2>
+        </header>
+        <DataTableScroll>
+          <DataTableRoot>
+            <DataTableHead>
+              <tr>
+                <DataTableHeader>Cliente</DataTableHeader>
+                <DataTableHeader>Teléfono</DataTableHeader>
+                <DataTableHeader>Estado</DataTableHeader>
+                <DataTableHeader>Enviado</DataTableHeader>
+                <DataTableHeader>Error</DataTableHeader>
+              </tr>
+            </DataTableHead>
+            <DataTableBody>
               {detail.recipients.map((r) => {
                 const customer = Array.isArray(r.customer) ? r.customer[0] : r.customer
                 return (
-                  <TableRow key={r.id}>
-                    <TableCell>
+                  <tr key={r.id} className="transition-colors hover:bg-secondary/40">
+                    <DataTableCell className="font-medium">
                       {customer ? `${customer.first_name} ${customer.last_name}` : '—'}
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    </DataTableCell>
+                    <DataTableCell className="font-mono text-xs text-muted-foreground">
                       {customer?.phone ?? '—'}
-                    </TableCell>
-                    <TableCell>{RECIPIENT_LABEL[r.status]}</TableCell>
-                    <TableCell className="text-muted-foreground">
+                    </DataTableCell>
+                    <DataTableCell>
+                      <Badge variant={recipientVariant(r.status)}>
+                        {RECIPIENT_LABEL[r.status]}
+                      </Badge>
+                    </DataTableCell>
+                    <DataTableCell className="text-xs text-muted-foreground">
                       {r.sent_at ? new Date(r.sent_at).toLocaleString('es-AR') : '—'}
-                    </TableCell>
-                    <TableCell className="text-red-700">{r.error ?? ''}</TableCell>
-                  </TableRow>
+                    </DataTableCell>
+                    <DataTableCell className="text-xs text-destructive">
+                      {r.error ?? ''}
+                    </DataTableCell>
+                  </tr>
                 )
               })}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
-    </main>
+            </DataTableBody>
+          </DataTableRoot>
+        </DataTableScroll>
+      </DataTableShell>
+    </div>
   )
 }

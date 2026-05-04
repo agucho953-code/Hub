@@ -15,7 +15,7 @@ const initial: CustomerActionState = { ok: true }
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="min-w-[140px]">
       {pending ? 'Guardando…' : 'Crear cliente'}
     </Button>
   )
@@ -36,7 +36,7 @@ export function NewCustomerForm({ tenantSlug }: { tenantSlug: string }) {
   }, [state, router, tenantSlug])
 
   return (
-    <form action={formAction} className="grid gap-4">
+    <form action={formAction} className="grid gap-5">
       <div className="grid gap-1.5">
         <Label htmlFor="phone">Teléfono</Label>
         <Input
@@ -49,7 +49,8 @@ export function NewCustomerForm({ tenantSlug }: { tenantSlug: string }) {
           aria-invalid={state.ok ? undefined : Boolean(state.fieldErrors?.phone)}
         />
         <p className="text-xs text-muted-foreground">
-          Lo normalizamos automáticamente. Aceptamos formatos con o sin código país.
+          Lo normalizamos a E.164 automáticamente. Aceptamos cualquier formato local o
+          internacional.
         </p>
       </div>
 
@@ -64,14 +65,17 @@ export function NewCustomerForm({ tenantSlug }: { tenantSlug: string }) {
         </div>
       </div>
 
-      <Label className="flex items-start gap-2 rounded-md border p-3">
-        <Checkbox name="opt_in_marketing" id="opt_in_marketing" />
-        <span className="text-sm leading-snug">
-          El cliente acepta recibir mensajes promocionales por WhatsApp y email.
-          <span className="block text-xs text-muted-foreground">
-            Solo marcá esto si te lo confirmó verbalmente o por escrito.
+      <Label className="flex items-start gap-3 rounded-lg border border-border/60 bg-background/40 p-3.5">
+        <Checkbox name="opt_in_marketing" id="opt_in_marketing" className="mt-0.5" />
+        <div className="space-y-0.5">
+          <span className="text-sm font-medium leading-none">
+            Acepta recibir promociones por WhatsApp y email
           </span>
-        </span>
+          <span className="block text-xs text-muted-foreground">
+            Marcá esto solo si te lo confirmó verbalmente o por escrito. Quedará registrado con
+            fecha y hora.
+          </span>
+        </div>
       </Label>
 
       <div className="flex justify-end">

@@ -1,7 +1,7 @@
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { PageHeader } from '@/components/ui/page-header'
 import {
   RoleRequiredError,
   requireRole,
@@ -10,7 +10,7 @@ import {
 } from '@/lib/tenant'
 import { NewEventForm } from './new-event-form'
 
-export const metadata = { title: 'Nuevo evento — HUB' }
+export const metadata = { title: 'Nuevo evento' }
 
 export default async function NuevoEventoPage({
   params,
@@ -30,21 +30,22 @@ export default async function NuevoEventoPage({
   }
 
   return (
-    <main className="mx-auto w-full max-w-2xl px-4 py-8">
-      <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-semibold">Nuevo evento</h1>
-        <Button asChild variant="ghost" size="sm">
-          <Link href={`/${tenantSlug}/eventos`}>Volver</Link>
-        </Button>
+    <div className="mx-auto w-full max-w-2xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}/eventos`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver a eventos
+      </Link>
+      <PageHeader
+        eyebrow="Eventos"
+        title="Nuevo evento"
+        description="Empezá como borrador y publicalo cuando esté todo listo."
+      />
+      <div className="card-hairline rounded-xl border bg-card p-6">
+        <NewEventForm tenantSlug={tenantSlug} />
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Datos del evento</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <NewEventForm tenantSlug={tenantSlug} />
-        </CardContent>
-      </Card>
-    </main>
+    </div>
   )
 }

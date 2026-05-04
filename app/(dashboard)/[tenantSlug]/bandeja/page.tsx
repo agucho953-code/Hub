@@ -1,4 +1,7 @@
+import { Inbox, MessageSquareDashed } from 'lucide-react'
 import { notFound } from 'next/navigation'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import {
   RoleRequiredError,
   requireRole,
@@ -9,7 +12,7 @@ import { ConversationList } from './_components/conversation-list'
 import { ConversationView } from './_components/conversation-view'
 import { listApprovedTemplates, listConversations } from './queries'
 
-export const metadata = { title: 'Bandeja — HUB' }
+export const metadata = { title: 'Bandeja' }
 export const dynamic = 'force-dynamic'
 
 export default async function BandejaPage({
@@ -36,28 +39,54 @@ export default async function BandejaPage({
   const templates = await listApprovedTemplates(access.tenant.id)
 
   return (
-    <main className="mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-6xl">
-      <aside className="w-80 border-r">
-        <ConversationList
-          conversations={conversations}
-          tenantSlug={tenantSlug}
-          selectedId={selectedId ?? null}
-        />
-      </aside>
-      <section className="flex-1 overflow-hidden">
-        {selectedId ? (
-          <ConversationView
+    <div className="mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Operación"
+        title="Bandeja"
+        description="Mensajes 1-a-1 con tus clientes en WhatsApp e Instagram, en un solo lugar."
+        className="pb-0"
+      />
+
+      <div className="card-hairline flex flex-1 overflow-hidden rounded-xl border bg-card">
+        <aside className="flex w-full max-w-[320px] shrink-0 flex-col border-r border-border/60 bg-surface/40">
+          <header className="flex items-center justify-between gap-2 border-b border-border/60 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Inbox className="size-4 text-primary" />
+              <h2 className="font-display text-sm font-semibold tracking-tight">Conversaciones</h2>
+            </div>
+            <span className="rounded-full bg-secondary/60 px-2 py-0.5 text-[11px] tabular-nums text-muted-foreground">
+              {conversations.length}
+            </span>
+          </header>
+          <ConversationList
+            conversations={conversations}
             tenantSlug={tenantSlug}
-            tenantId={access.tenant.id}
-            conversationId={selectedId}
-            templates={templates}
+            selectedId={selectedId ?? null}
           />
-        ) : (
-          <div className="flex h-full items-center justify-center text-sm text-muted-foreground">
-            Elegí una conversación
-          </div>
-        )}
-      </section>
-    </main>
+        </aside>
+        <section className="flex flex-1 overflow-hidden">
+          {selectedId ? (
+            <ConversationView
+              tenantSlug={tenantSlug}
+              tenantId={access.tenant.id}
+              conversationId={selectedId}
+              templates={templates}
+            />
+          ) : (
+            <div className="flex w-full items-center justify-center p-6">
+              <EmptyState
+                icon={MessageSquareDashed}
+                title="Elegí una conversación"
+                description={
+                  conversations.length === 0
+                    ? 'Cuando un cliente te escriba por WhatsApp o Instagram, va a aparecer en esta lista.'
+                    : 'Tocá una conversación de la izquierda para ver el hilo y responder.'
+                }
+              />
+            </div>
+          )}
+        </section>
+      </div>
+    </div>
   )
 }

@@ -1,4 +1,7 @@
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { PageHeader } from '@/components/ui/page-header'
 import { createClient } from '@/lib/supabase/server'
 import {
   RoleRequiredError,
@@ -8,7 +11,7 @@ import {
 } from '@/lib/tenant'
 import { FlowBuilder } from '../_components/flow-builder'
 
-export const metadata = { title: 'Nuevo flow — HUB' }
+export const metadata = { title: 'Nuevo flow' }
 export const dynamic = 'force-dynamic'
 
 export default async function NewFlowPage({ params }: { params: Promise<{ tenantSlug: string }> }) {
@@ -39,14 +42,25 @@ export default async function NewFlowPage({ params }: { params: Promise<{ tenant
   ])
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-4">
-      <h1 className="text-2xl font-semibold">Nuevo flow</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}/flows`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver a flows
+      </Link>
+      <PageHeader
+        eyebrow="Marketing"
+        title="Nuevo flow"
+        description="Definí cuándo se dispara y qué pasos ejecuta. Activalo solo cuando esté listo."
+      />
       <FlowBuilder
         tenantSlug={tenantSlug}
         channels={chRes.data ?? []}
         templates={tplRes.data ?? []}
         tags={tagsRes.data ?? []}
       />
-    </main>
+    </div>
   )
 }

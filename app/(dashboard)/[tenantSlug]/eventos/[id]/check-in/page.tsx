@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
@@ -10,7 +11,7 @@ import {
 } from '@/lib/tenant'
 import { CheckInBoard } from './check-in-board'
 
-export const metadata = { title: 'Check-in — HUB' }
+export const metadata = { title: 'Check-in' }
 
 export default async function CheckInPage({
   params,
@@ -33,20 +34,27 @@ export default async function CheckInPage({
   if (!detail) notFound()
   const reservations = await listReservations({ tenantId: access.tenant.id, eventId: id })
   const eligible = reservations.filter((r) => r.status === 'confirmed' || r.status === 'checked_in')
+  const checkedIn = eligible.filter((r) => r.status === 'checked_in').length
 
   return (
-    <div className="min-h-screen bg-background">
-      <header className="border-b bg-background px-4 py-3">
-        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3">
+    <div className="bg-app-gradient min-h-screen">
+      <header className="sticky top-0 z-10 border-b border-border/60 bg-background/80 backdrop-blur-xl">
+        <div className="mx-auto flex max-w-3xl items-center justify-between gap-3 px-4 py-3">
           <div className="min-w-0">
-            <h1 className="truncate text-lg font-semibold">{detail.event.name}</h1>
-            <p className="text-xs text-muted-foreground">
-              Modo check-in · {detail.confirmed_seats}
-              {detail.event.capacity !== null ? `/${detail.event.capacity}` : ''} confirmadas
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary">
+              Modo check-in
+            </p>
+            <h1 className="truncate font-display text-lg font-semibold">{detail.event.name}</h1>
+            <p className="text-xs text-muted-foreground tabular-nums">
+              {checkedIn}/{detail.confirmed_seats} confirmadas ingresadas
+              {detail.event.capacity !== null ? ` · cupo ${detail.event.capacity}` : ''}
             </p>
           </div>
-          <Button asChild variant="outline" size="sm">
-            <Link href={`/${tenantSlug}/eventos/${id}`}>Salir</Link>
+          <Button asChild variant="outline" size="sm" className="gap-1.5">
+            <Link href={`/${tenantSlug}/eventos/${id}`}>
+              <ArrowLeft className="size-3.5" />
+              Salir
+            </Link>
           </Button>
         </div>
       </header>

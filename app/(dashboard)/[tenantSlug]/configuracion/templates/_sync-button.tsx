@@ -1,5 +1,6 @@
 'use client'
 
+import { RefreshCw } from 'lucide-react'
 import { useActionState, useEffect } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -27,7 +28,8 @@ export function TemplateSyncButton({
   return (
     <form action={action}>
       <input type="hidden" name="channel_id" value={channelId} />
-      <Button type="submit" disabled={pending}>
+      <Button type="submit" disabled={pending} className="gap-2">
+        <RefreshCw className={`size-4 ${pending ? 'animate-spin' : ''}`} />
         {pending ? 'Sincronizando…' : 'Sincronizar con Meta'}
       </Button>
     </form>

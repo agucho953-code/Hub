@@ -1,14 +1,16 @@
+import { ChevronLeft, ChevronRight, QrCode, UserPlus, Users } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { listCaptureLinks, listCustomers, listTags, PAGE_SIZE } from '@/lib/customers/queries'
 import { listFiltersSchema } from '@/lib/customers/schemas'
 import { requireTenantAccess, TenantNotFoundError } from '@/lib/tenant'
 import { CustomersFilters } from './_components/customers-filters'
 import { CustomersTable } from './_components/customers-table'
 
-export const metadata = { title: 'Clientes — HUB' }
+export const metadata = { title: 'Clientes' }
 
 export default async function ClientesPage({
   params,
@@ -43,44 +45,73 @@ export default async function ClientesPage({
 
   const totalPages = Math.max(1, Math.ceil(total / PAGE_SIZE))
   const hasCaptureLinks = links.length > 0
+  const hasFilters = Boolean(filters.q || filters.tag || filters.since)
+  const isEmpty = rows.length === 0
 
   return (
-    <main className="mx-auto w-full max-w-6xl px-4 py-8">
-      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <div>
-          <h1 className="text-2xl font-semibold">Clientes</h1>
-          <p className="text-sm text-muted-foreground">
-            {total} {total === 1 ? 'cliente' : 'clientes'} en total
-          </p>
-        </div>
-        <div className="flex gap-2">
-          {!hasCaptureLinks ? (
-            <Button asChild variant="outline">
-              <Link href={`/${tenantSlug}/configuracion/captura`}>Crear link de captura</Link>
+    <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Operación"
+        title="Clientes"
+        description={`${total.toLocaleString('es-AR')} ${total === 1 ? 'cliente registrado' : 'clientes registrados'} · página ${filters.page} de ${totalPages}`}
+        actions={
+          <>
+            {!hasCaptureLinks ? (
+              <Button asChild variant="outline" className="gap-2">
+                <Link href={`/${tenantSlug}/configuracion/captura`}>
+                  <QrCode className="size-4" />
+                  Crear QR de captura
+                </Link>
+              </Button>
+            ) : null}
+            <Button asChild className="gap-2">
+              <Link href={`/${tenantSlug}/clientes/nuevo`}>
+                <UserPlus className="size-4" />
+                Nuevo cliente
+              </Link>
             </Button>
-          ) : null}
-          <Button asChild>
-            <Link href={`/${tenantSlug}/clientes/nuevo`}>Nuevo cliente</Link>
-          </Button>
-        </div>
-      </div>
+          </>
+        }
+      />
 
-      <Card className="mb-4">
-        <CardContent className="py-4">
-          <CustomersFilters tags={tags} />
-        </CardContent>
-      </Card>
+      <CustomersFilters tags={tags} />
 
-      <Card>
-        <CardContent className="p-0">
-          <CustomersTable rows={rows} tenantSlug={tenantSlug} />
-        </CardContent>
-      </Card>
+      {isEmpty ? (
+        <EmptyState
+          icon={Users}
+          title={hasFilters ? 'Sin resultados' : 'Todavía no hay clientes'}
+          description={
+            hasFilters
+              ? 'Probá ajustar la búsqueda o quitar filtros para ver más clientes.'
+              : 'Empezá registrando un cliente manualmente o imprimí un QR de captura para que se carguen solos.'
+          }
+          action={
+            !hasFilters ? (
+              <div className="flex flex-wrap justify-center gap-2">
+                <Button asChild className="gap-2">
+                  <Link href={`/${tenantSlug}/clientes/nuevo`}>
+                    <UserPlus className="size-4" />
+                    Nuevo cliente
+                  </Link>
+                </Button>
+                <Button asChild variant="outline" className="gap-2">
+                  <Link href={`/${tenantSlug}/configuracion/captura`}>
+                    <QrCode className="size-4" />
+                    Crear QR
+                  </Link>
+                </Button>
+              </div>
+            ) : null
+          }
+        />
+      ) : (
+        <CustomersTable rows={rows} tenantSlug={tenantSlug} />
+      )}
 
       {totalPages > 1 ? (
         <Pagination tenantSlug={tenantSlug} page={filters.page} totalPages={totalPages} sp={sp} />
       ) : null}
-    </main>
+    </div>
   )
 }
 
@@ -104,18 +135,46 @@ function Pagination({
     return `/${tenantSlug}/clientes?${params.toString()}`
   }
   return (
-    <div className="mt-4 flex items-center justify-between text-sm">
-      <Button variant="outline" size="sm" disabled={page <= 1} asChild={page > 1}>
-        {page > 1 ? <Link href={buildHref(page - 1)}>Anterior</Link> : <span>Anterior</span>}
+    <div className="flex items-center justify-between gap-3">
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={page <= 1}
+        className="gap-1.5"
+        asChild={page > 1}
+      >
+        {page > 1 ? (
+          <Link href={buildHref(page - 1)}>
+            <ChevronLeft className="size-3.5" />
+            Anterior
+          </Link>
+        ) : (
+          <span>
+            <ChevronLeft className="size-3.5" />
+            Anterior
+          </span>
+        )}
       </Button>
-      <span className="text-muted-foreground">
+      <span className="text-xs tabular-nums text-muted-foreground">
         Página {page} de {totalPages}
       </span>
-      <Button variant="outline" size="sm" disabled={page >= totalPages} asChild={page < totalPages}>
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={page >= totalPages}
+        className="gap-1.5"
+        asChild={page < totalPages}
+      >
         {page < totalPages ? (
-          <Link href={buildHref(page + 1)}>Siguiente</Link>
+          <Link href={buildHref(page + 1)}>
+            Siguiente
+            <ChevronRight className="size-3.5" />
+          </Link>
         ) : (
-          <span>Siguiente</span>
+          <span>
+            Siguiente
+            <ChevronRight className="size-3.5" />
+          </span>
         )}
       </Button>
     </div>

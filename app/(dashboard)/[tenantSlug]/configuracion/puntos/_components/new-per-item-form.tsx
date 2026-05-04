@@ -1,5 +1,6 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
@@ -58,23 +59,27 @@ export function NewPerItemForm({
   }
 
   return (
-    <form onSubmit={onSubmit} className="rounded-md border p-3">
-      <p className="mb-2 text-sm font-medium">Por ítem o categoría</p>
+    <form onSubmit={onSubmit} className="card-hairline rounded-xl border bg-card p-4 space-y-3">
+      <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+        Por ítem o categoría
+      </h3>
       <div className="grid gap-2 sm:grid-cols-[1fr_1fr_80px_80px_auto] sm:items-end">
         <div className="grid gap-1">
-          <Label className="text-xs">Aplicar a</Label>
+          <Label className="text-[11px] text-muted-foreground">Tipo</Label>
           <Select value={mode} onValueChange={(v) => setMode(v as 'item' | 'category')}>
             <SelectTrigger>
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="category">Categoría</SelectItem>
-              <SelectItem value="item">Ítem específico</SelectItem>
+              <SelectItem value="item">Ítem</SelectItem>
             </SelectContent>
           </Select>
         </div>
         <div className="grid gap-1">
-          <Label className="text-xs">{mode === 'category' ? 'Categoría' : 'Ítem'}</Label>
+          <Label className="text-[11px] text-muted-foreground">
+            {mode === 'category' ? 'Categoría' : 'Ítem'}
+          </Label>
           <Select value={targetId} onValueChange={setTargetId}>
             <SelectTrigger>
               <SelectValue placeholder="Elegir…" />
@@ -89,14 +94,26 @@ export function NewPerItemForm({
           </Select>
         </div>
         <div className="grid gap-1">
-          <Label className="text-xs">Puntos</Label>
-          <Input type="number" min={1} value={points} onChange={(e) => setPoints(e.target.value)} />
+          <Label className="text-[11px] text-muted-foreground">Puntos</Label>
+          <Input
+            type="number"
+            min={1}
+            value={points}
+            onChange={(e) => setPoints(e.target.value)}
+            className="tabular-nums"
+          />
         </div>
         <div className="grid gap-1">
-          <Label className="text-xs">Prio.</Label>
-          <Input type="number" value={priority} onChange={(e) => setPriority(e.target.value)} />
+          <Label className="text-[11px] text-muted-foreground">Prio.</Label>
+          <Input
+            type="number"
+            value={priority}
+            onChange={(e) => setPriority(e.target.value)}
+            className="tabular-nums"
+          />
         </div>
-        <Button type="submit" disabled={pending} size="sm">
+        <Button type="submit" disabled={pending} size="sm" className="gap-1.5">
+          <Plus className="size-3.5" />
           {pending ? '…' : 'Crear'}
         </Button>
       </div>

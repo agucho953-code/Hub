@@ -1,10 +1,11 @@
 'use client'
 
+import { Plus, Search, Users } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
+import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { ReservationRow } from '@/lib/events/queries'
 import { cancelReservation, checkInReservation } from '@/lib/events/reservations'
 import { formatPhoneForDisplay } from '@/lib/phone'
@@ -61,58 +62,83 @@ export function ReservationsTab({
 
   return (
     <div>
-      <div className="flex flex-wrap items-center gap-2 border-b p-3">
-        <Input
-          placeholder="Buscar por nombre o teléfono…"
-          value={query}
-          onChange={(e) => setQuery(e.target.value)}
-          className="max-w-xs"
-        />
-        <span className="text-sm text-muted-foreground">
+      <div className="flex flex-wrap items-center gap-2 border-b border-border/60 bg-secondary/20 p-3">
+        <label className="relative flex flex-1 items-center sm:max-w-xs">
+          <Search className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+          <input
+            placeholder="Buscar nombre o teléfono…"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            className="h-9 w-full rounded-lg border border-transparent bg-background/60 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/40"
+          />
+        </label>
+        <span className="flex items-center gap-1.5 text-xs text-muted-foreground tabular-nums">
+          <Users className="size-3.5" />
           {capacity === null
             ? `${confirmedSeats} confirmadas`
             : `${confirmedSeats}/${capacity} ocupado`}
         </span>
-        <div className="ml-auto">
-          <Button
-            size="sm"
-            disabled={status !== 'published' && status !== 'draft'}
-            onClick={() => setOpenNew(true)}
-          >
-            + Reservar
-          </Button>
-        </div>
+        <Button
+          size="sm"
+          disabled={status !== 'published' && status !== 'draft'}
+          onClick={() => setOpenNew(true)}
+          className="ml-auto gap-1.5"
+        >
+          <Plus className="size-3.5" />
+          Reservar
+        </Button>
       </div>
 
       {visible.length === 0 ? (
-        <div className="px-4 py-10 text-center text-sm text-muted-foreground">
+        <div className="px-5 py-12 text-center text-sm text-muted-foreground">
           {query ? 'Sin coincidencias.' : 'Aún no hay reservas confirmadas.'}
         </div>
       ) : (
-        <ul className="divide-y">
-          {visible.map((r) => (
-            <li key={r.id} className="flex flex-wrap items-center gap-3 px-3 py-2 text-sm">
-              <div className="min-w-0 flex-1">
-                <div className="font-medium">
-                  {r.customer.first_name} {r.customer.last_name}
+        <ul className="divide-y divide-border/60">
+          {visible.map((r) => {
+            const initials =
+              `${r.customer.first_name?.[0] ?? ''}${r.customer.last_name?.[0] ?? ''}`.toUpperCase()
+            return (
+              <li
+                key={r.id}
+                className="flex flex-wrap items-center gap-3 px-4 py-3 transition-colors hover:bg-secondary/30"
+              >
+                <Avatar className="size-9">
+                  <AvatarFallback className="bg-secondary text-xs font-semibold">
+                    {initials}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium">
+                    {r.customer.first_name} {r.customer.last_name}
+                  </p>
+                  <p className="font-mono text-[11px] text-muted-foreground">
+                    {formatPhoneForDisplay(r.customer.phone)}
+                  </p>
                 </div>
-                <div className="font-mono text-xs text-muted-foreground">
-                  {formatPhoneForDisplay(r.customer.phone)}
-                </div>
-              </div>
-              <Badge variant="secondary">×{r.guests_count}</Badge>
-              {r.status === 'checked_in' ? (
-                <Badge>Check-in</Badge>
-              ) : (
-                <Button size="sm" variant="outline" onClick={() => onCheckin(r.id)}>
-                  Check-in
+                <Badge variant="secondary" className="tabular-nums">
+                  ×{r.guests_count}
+                </Badge>
+                {r.status === 'checked_in' ? (
+                  <Badge className="bg-success text-success-foreground hover:bg-success/90">
+                    Check-in OK
+                  </Badge>
+                ) : (
+                  <Button size="sm" variant="outline" onClick={() => onCheckin(r.id)}>
+                    Check-in
+                  </Button>
+                )}
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  className="text-muted-foreground hover:text-destructive"
+                  onClick={() => onCancel(r.id)}
+                >
+                  Cancelar
                 </Button>
-              )}
-              <Button size="sm" variant="ghost" onClick={() => onCancel(r.id)}>
-                Cancelar
-              </Button>
-            </li>
-          ))}
+              </li>
+            )
+          })}
         </ul>
       )}
 

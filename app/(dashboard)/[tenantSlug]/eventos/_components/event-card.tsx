@@ -1,8 +1,8 @@
 import { format } from 'date-fns'
 import { es } from 'date-fns/locale'
+import { CalendarDays, Users } from 'lucide-react'
 import Link from 'next/link'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent } from '@/components/ui/card'
 import type { EventListEntry } from '@/lib/events/queries'
 
 const statusLabel: Record<
@@ -24,36 +24,55 @@ export function EventCard({ tenantSlug, event }: { tenantSlug: string; event: Ev
   const status = statusLabel[event.status]
 
   return (
-    <Card className="overflow-hidden">
-      {event.cover_image_url ? (
-        // biome-ignore lint/performance/noImgElement: cover image url ya viene del bucket público
-        <img src={event.cover_image_url} alt={event.name} className="h-32 w-full object-cover" />
-      ) : (
-        <div className="h-32 w-full bg-gradient-to-br from-primary/15 to-muted" />
-      )}
-      <CardContent className="space-y-2 p-4">
-        <div className="flex items-start justify-between gap-2">
-          <Link href={`/${tenantSlug}/eventos/${event.id}`} className="font-medium hover:underline">
-            {event.name}
-          </Link>
-          <Badge variant={status.variant}>{status.label}</Badge>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {format(new Date(event.starts_at), 'EEEE d MMM · HH:mm', { locale: es })}
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="flex-1 overflow-hidden rounded-full bg-muted">
-            <div
-              className="h-1.5 rounded-full bg-primary"
-              style={{ width: `${Math.round(ratio * 100)}%` }}
-            />
+    <Link
+      href={`/${tenantSlug}/eventos/${event.id}`}
+      className="card-hairline group flex flex-col overflow-hidden rounded-xl border bg-card transition-all hover:border-primary/40"
+    >
+      <div className="relative h-36 w-full overflow-hidden">
+        {event.cover_image_url ? (
+          // biome-ignore lint/performance/noImgElement: cover viene del bucket público
+          <img
+            src={event.cover_image_url}
+            alt={event.name}
+            className="size-full object-cover transition-transform group-hover:scale-105"
+          />
+        ) : (
+          <div className="size-full bg-gradient-to-br from-primary/30 via-primary/10 to-secondary" />
+        )}
+        <div className="absolute inset-x-0 bottom-0 flex items-end justify-between gap-2 bg-gradient-to-t from-black/60 to-transparent p-3">
+          <div className="flex items-center gap-1.5 text-[11px] font-medium text-white">
+            <CalendarDays className="size-3.5" />
+            {format(new Date(event.starts_at), "EEE d 'de' MMM · HH:mm", { locale: es })}
           </div>
-          <span className="text-xs font-medium">{occupancy}</span>
+          <Badge variant={status.variant} className="shrink-0 text-[10px] uppercase tracking-wider">
+            {status.label}
+          </Badge>
         </div>
-        {event.waitlist_count > 0 ? (
-          <div className="text-xs text-muted-foreground">+{event.waitlist_count} en waitlist</div>
-        ) : null}
-      </CardContent>
-    </Card>
+      </div>
+      <div className="flex flex-1 flex-col gap-3 p-4">
+        <h3 className="font-display text-base font-semibold tracking-tight line-clamp-2 group-hover:text-primary">
+          {event.name}
+        </h3>
+        <div className="mt-auto space-y-2">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 overflow-hidden rounded-full bg-secondary/60">
+              <div
+                className="h-1.5 rounded-full bg-primary transition-all"
+                style={{ width: `${Math.round(ratio * 100)}%` }}
+              />
+            </div>
+            <span className="flex items-center gap-1 text-xs font-medium tabular-nums">
+              <Users className="size-3 text-muted-foreground" />
+              {occupancy}
+            </span>
+          </div>
+          {event.waitlist_count > 0 ? (
+            <p className="text-[11px] text-muted-foreground">
+              +{event.waitlist_count} en lista de espera
+            </p>
+          ) : null}
+        </div>
+      </div>
+    </Link>
   )
 }

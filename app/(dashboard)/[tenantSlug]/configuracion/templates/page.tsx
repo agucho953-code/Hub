@@ -1,14 +1,19 @@
+import { MessageSquareText, Plug } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Badge } from '@/components/ui/badge'
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRoot,
+  DataTableScroll,
+  DataTableShell,
+} from '@/components/ui/data-table'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { createClient } from '@/lib/supabase/server'
 import {
   RoleRequiredError,
@@ -19,7 +24,7 @@ import {
 import type { TemplateStatus } from '@/types/database'
 import { TemplateSyncButton } from './_sync-button'
 
-export const metadata = { title: 'Templates — HUB' }
+export const metadata = { title: 'Plantillas' }
 export const dynamic = 'force-dynamic'
 
 const STATUS_LABEL: Record<TemplateStatus, string> = {
@@ -78,65 +83,74 @@ export default async function TemplatesPage({
   }>
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 p-4">
-      <header className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Templates de WhatsApp</h1>
-          <p className="text-sm text-muted-foreground">
-            Sincronizá los templates aprobados por Meta para enviarlos fuera de la ventana de 24 h.
-          </p>
-        </div>
-        {channel ? <TemplateSyncButton channelId={channel.id} tenantSlug={tenantSlug} /> : null}
-      </header>
+    <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Configuración"
+        title="Plantillas de WhatsApp"
+        description="Sincronizá los templates aprobados por Meta para usarlos en difusiones y mensajes fuera de la ventana de 24h."
+        actions={
+          channel ? <TemplateSyncButton channelId={channel.id} tenantSlug={tenantSlug} /> : null
+        }
+      />
 
       {!channel ? (
-        <Card>
-          <CardHeader>
-            <CardTitle>Conectá WhatsApp primero</CardTitle>
-            <CardDescription>
-              Andá a Canales y completá el flujo de Embedded Signup para poder gestionar templates.
-            </CardDescription>
-          </CardHeader>
-        </Card>
+        <EmptyState
+          icon={Plug}
+          title="Conectá WhatsApp primero"
+          description="Necesitás completar el flujo de Embedded Signup en Canales antes de poder gestionar templates."
+          action={
+            <Button asChild className="gap-2">
+              <Link href={`/${tenantSlug}/configuracion/canales`}>
+                <Plug className="size-4" />
+                Ir a Canales
+              </Link>
+            </Button>
+          }
+        />
       ) : templates.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Todavía no hay templates sincronizados. Tocá &quot;Sincronizar&quot; para traer los de
-            Meta.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={MessageSquareText}
+          title="Sin templates sincronizados"
+          description="Tocá Sincronizar arriba para traer los templates aprobados por Meta."
+        />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Idioma</TableHead>
-                  <TableHead>Categoría</TableHead>
-                  <TableHead>Estado</TableHead>
-                  <TableHead>Última sync</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <DataTableShell>
+          <DataTableScroll>
+            <DataTableRoot>
+              <DataTableHead>
+                <tr>
+                  <DataTableHeader>Nombre</DataTableHeader>
+                  <DataTableHeader>Idioma</DataTableHeader>
+                  <DataTableHeader>Categoría</DataTableHeader>
+                  <DataTableHeader>Estado</DataTableHeader>
+                  <DataTableHeader>Última sync</DataTableHeader>
+                </tr>
+              </DataTableHead>
+              <DataTableBody>
                 {templates.map((t) => (
-                  <TableRow key={t.id}>
-                    <TableCell className="font-medium">{t.name}</TableCell>
-                    <TableCell>{t.language}</TableCell>
-                    <TableCell className="capitalize">{t.category.toLowerCase()}</TableCell>
-                    <TableCell>
+                  <tr key={t.id} className="transition-colors hover:bg-secondary/40">
+                    <DataTableCell className="font-medium font-mono text-xs">
+                      {t.name}
+                    </DataTableCell>
+                    <DataTableCell className="text-xs uppercase tracking-wider text-muted-foreground">
+                      {t.language}
+                    </DataTableCell>
+                    <DataTableCell className="capitalize text-muted-foreground">
+                      {t.category.toLowerCase()}
+                    </DataTableCell>
+                    <DataTableCell>
                       <Badge variant={statusVariant(t.status)}>{STATUS_LABEL[t.status]}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
+                    </DataTableCell>
+                    <DataTableCell className="text-xs text-muted-foreground">
                       {t.last_synced_at ? new Date(t.last_synced_at).toLocaleString('es-AR') : '—'}
-                    </TableCell>
-                  </TableRow>
+                    </DataTableCell>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </DataTableBody>
+            </DataTableRoot>
+          </DataTableScroll>
+        </DataTableShell>
       )}
-    </main>
+    </div>
   )
 }

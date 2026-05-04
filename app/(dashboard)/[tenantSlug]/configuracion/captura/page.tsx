@@ -1,5 +1,7 @@
+import { QrCode } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { listCaptureLinks } from '@/lib/customers/queries'
 import {
   RoleRequiredError,
@@ -10,7 +12,7 @@ import {
 import { LinkRow } from './_components/link-row'
 import { NewLinkForm } from './_components/new-link-form'
 
-export const metadata = { title: 'Captura — HUB' }
+export const metadata = { title: 'Captura' }
 
 export default async function CapturaConfigPage({
   params,
@@ -30,41 +32,47 @@ export default async function CapturaConfigPage({
   }
 
   const links = await listCaptureLinks({ tenantId: access.tenant.id })
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
 
   return (
-    <main className="mx-auto w-full max-w-4xl px-4 py-8">
-      <h1 className="mb-6 text-2xl font-semibold">Captura de clientes</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Configuración"
+        title="Captura de clientes"
+        description="Generá QRs únicos por mesa, barra o evento. Los clientes los escanean y cargan sus datos solos."
+      />
 
-      <div className="grid gap-6">
-        <Card>
-          <CardHeader>
-            <CardTitle>Nuevo link</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <NewLinkForm tenantSlug={tenantSlug} />
-            <p className="mt-3 text-xs text-muted-foreground">
-              Cada link genera un QR único. Imprimilo y ponelo en mesas, barra o stickers.
-            </p>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader>
-            <CardTitle>Links de captura ({links.length})</CardTitle>
-          </CardHeader>
-          <CardContent className="flex flex-col divide-y">
-            {links.length === 0 ? (
-              <p className="text-sm text-muted-foreground">Todavía no creaste ningún link.</p>
-            ) : (
-              links.map((link) => (
-                <LinkRow key={link.id} link={link} tenantSlug={tenantSlug} appUrl={appUrl} />
-              ))
-            )}
-          </CardContent>
-        </Card>
+      <div className="card-hairline rounded-xl border bg-card p-5">
+        <h2 className="font-display text-sm font-semibold tracking-tight">Nuevo link de captura</h2>
+        <p className="text-xs text-muted-foreground">
+          Cada link genera un QR único. Imprimilo y ponelo en mesas, barra o stickers.
+        </p>
+        <div className="mt-4">
+          <NewLinkForm tenantSlug={tenantSlug} />
+        </div>
       </div>
-    </main>
+
+      <section className="space-y-3">
+        <header className="flex items-center justify-between gap-2">
+          <h2 className="font-display text-sm font-semibold tracking-tight">
+            Links activos <span className="text-muted-foreground">({links.length})</span>
+          </h2>
+        </header>
+
+        {links.length === 0 ? (
+          <EmptyState
+            icon={QrCode}
+            title="Aún no creaste ningún link"
+            description="Empezá generando un QR para tus mesas. Cuando los clientes lo escaneen, se cargan automáticamente en tu base."
+          />
+        ) : (
+          <div className="card-hairline divide-y divide-border/60 overflow-hidden rounded-xl border bg-card">
+            {links.map((link) => (
+              <LinkRow key={link.id} link={link} tenantSlug={tenantSlug} appUrl={appUrl} />
+            ))}
+          </div>
+        )}
+      </section>
+    </div>
   )
 }

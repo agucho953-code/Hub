@@ -15,7 +15,7 @@ const initial: CustomerActionState = { ok: true }
 function SubmitButton() {
   const { pending } = useFormStatus()
   return (
-    <Button type="submit" disabled={pending}>
+    <Button type="submit" disabled={pending} className="min-w-[140px]">
       {pending ? 'Guardando…' : 'Guardar cambios'}
     </Button>
   )
@@ -50,7 +50,7 @@ export function CustomerForm({
   }, [state])
 
   return (
-    <form action={formAction} className="grid gap-4">
+    <form action={formAction} className="grid gap-5">
       <input type="hidden" name="id" value={customer.id} />
 
       <div className="grid gap-3 sm:grid-cols-2">
@@ -106,17 +106,27 @@ export function CustomerForm({
           name="notes"
           defaultValue={customer.notes ?? ''}
           maxLength={500}
-          placeholder="Preferencias, alergias, observaciones…"
+          placeholder="Preferencias, alergias, observaciones del staff…"
+          rows={4}
+          className="resize-none"
         />
       </div>
 
-      <Label className="flex items-start gap-2 rounded-md border p-3">
+      <Label className="flex items-start gap-3 rounded-lg border border-border/60 bg-background/40 p-3.5">
         <Checkbox
           name="opt_in_marketing"
           id="opt_in_marketing"
           defaultChecked={customer.opt_in_marketing}
+          className="mt-0.5"
         />
-        <span className="text-sm leading-snug">Acepta recibir promociones por WhatsApp/email.</span>
+        <div className="space-y-0.5">
+          <span className="text-sm font-medium leading-none">
+            Acepta recibir promociones por WhatsApp/email
+          </span>
+          <span className="block text-xs text-muted-foreground">
+            Solo marcá esto si te lo confirmó. Quedará registrado con fecha y hora.
+          </span>
+        </div>
       </Label>
 
       <div className="flex justify-end">

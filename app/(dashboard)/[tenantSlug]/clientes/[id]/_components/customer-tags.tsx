@@ -1,5 +1,6 @@
 'use client'
 
+import { Plus } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import {
@@ -57,26 +58,30 @@ export function CustomerTags({
   }
 
   return (
-    <div className="flex flex-wrap items-center gap-2" aria-busy={pending}>
+    <div className="flex flex-wrap items-center gap-1.5" aria-busy={pending}>
       {tags.map((t) => (
         <TagPill key={t.id} tag={t} onRemove={() => onRemove(t.id)} />
       ))}
       {available.length > 0 ? (
         <Select onValueChange={onAdd} value="">
-          <SelectTrigger className="h-7 w-auto gap-1 px-2 text-xs">
-            <SelectValue placeholder="+ Etiqueta" />
+          <SelectTrigger className="h-6 w-auto gap-1 rounded-full border-dashed bg-transparent px-2 text-[11px] text-muted-foreground hover:bg-secondary/40">
+            <Plus className="size-3" />
+            <SelectValue placeholder="Etiqueta" />
           </SelectTrigger>
           <SelectContent>
             {available.map((t) => (
               <SelectItem key={t.id} value={t.id}>
-                {t.name}
+                <span className="flex items-center gap-2">
+                  <span className="size-2 rounded-full" style={{ backgroundColor: t.color }} />
+                  {t.name}
+                </span>
               </SelectItem>
             ))}
           </SelectContent>
         </Select>
       ) : null}
       {tags.length === 0 && available.length === 0 ? (
-        <span className="text-xs text-muted-foreground">No hay etiquetas creadas todavía.</span>
+        <span className="text-xs text-muted-foreground/70">Sin etiquetas creadas todavía.</span>
       ) : null}
     </div>
   )

@@ -1,9 +1,9 @@
 'use client'
 
+import { Search, X } from 'lucide-react'
 import { usePathname, useRouter, useSearchParams } from 'next/navigation'
 import { useTransition } from 'react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -24,7 +24,7 @@ export function CustomersFilters({ tags }: { tags: Tag[] }) {
     const next = new URLSearchParams(searchParams.toString())
     if (value && value.length > 0) next.set(key, value)
     else next.delete(key)
-    next.delete('page') // resetear paginado al cambiar filtros
+    next.delete('page')
     start(() => router.replace(`${pathname}?${next.toString()}`, { scroll: false }))
   }
 
@@ -35,27 +35,34 @@ export function CustomersFilters({ tags }: { tags: Tag[] }) {
     setParam('q', typeof q === 'string' ? q : null)
   }
 
+  const clearAll = () => {
+    start(() => router.replace(pathname, { scroll: false }))
+  }
+
   const q = searchParams.get('q') ?? ''
   const tag = searchParams.get('tag') ?? ''
   const since = searchParams.get('since') ?? ''
+  const hasFilters = q.length > 0 || tag.length > 0 || since.length > 0
 
   return (
     <form
       onSubmit={onSubmit}
-      className="grid gap-3 md:grid-cols-[1fr_180px_180px_auto]"
+      className="card-hairline flex flex-col gap-2 rounded-xl border bg-card/60 p-2 sm:flex-row sm:items-center"
       aria-busy={pending}
     >
-      <Input
-        name="q"
-        defaultValue={q}
-        placeholder="Buscar por nombre o teléfono…"
-        autoComplete="off"
-      />
-      <Select
-        defaultValue={tag || 'all'}
-        onValueChange={(v) => setParam('tag', v === 'all' ? null : v)}
-      >
-        <SelectTrigger>
+      <label className="relative flex flex-1 items-center">
+        <Search className="pointer-events-none absolute left-3 size-4 text-muted-foreground" />
+        <input
+          name="q"
+          defaultValue={q}
+          placeholder="Buscar por nombre o teléfono…"
+          autoComplete="off"
+          className="h-9 w-full rounded-lg border border-transparent bg-background/40 pl-9 pr-3 text-sm shadow-none outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/40"
+        />
+      </label>
+
+      <Select value={tag || 'all'} onValueChange={(v) => setParam('tag', v === 'all' ? null : v)}>
+        <SelectTrigger className="h-9 sm:w-[180px]">
           <SelectValue placeholder="Etiqueta" />
         </SelectTrigger>
         <SelectContent>
@@ -67,11 +74,12 @@ export function CustomersFilters({ tags }: { tags: Tag[] }) {
           ))}
         </SelectContent>
       </Select>
+
       <Select
-        defaultValue={since || 'any'}
+        value={since || 'any'}
         onValueChange={(v) => setParam('since', v === 'any' ? null : v)}
       >
-        <SelectTrigger>
+        <SelectTrigger className="h-9 sm:w-[180px]">
           <SelectValue placeholder="Última visita" />
         </SelectTrigger>
         <SelectContent>
@@ -81,7 +89,21 @@ export function CustomersFilters({ tags }: { tags: Tag[] }) {
           <SelectItem value="never">Nunca volvió</SelectItem>
         </SelectContent>
       </Select>
-      <Button type="submit" variant="default">
+
+      {hasFilters ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="sm"
+          onClick={clearAll}
+          className="h-9 gap-1.5 text-muted-foreground"
+        >
+          <X className="size-3.5" />
+          Limpiar
+        </Button>
+      ) : null}
+
+      <Button type="submit" size="sm" className="h-9">
         Buscar
       </Button>
     </form>

@@ -1,16 +1,18 @@
+import { ChevronRight, Plus, UsersRound } from 'lucide-react'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
+  DataTableBody,
+  DataTableCell,
+  DataTableHead,
+  DataTableHeader,
+  DataTableRoot,
+  DataTableScroll,
+  DataTableShell,
+} from '@/components/ui/data-table'
+import { EmptyState } from '@/components/ui/empty-state'
+import { PageHeader } from '@/components/ui/page-header'
 import { listAudiences } from '@/lib/audiences/queries'
 import {
   RoleRequiredError,
@@ -19,7 +21,7 @@ import {
   TenantNotFoundError,
 } from '@/lib/tenant'
 
-export const metadata = { title: 'Audiencias — HUB' }
+export const metadata = { title: 'Audiencias' }
 export const dynamic = 'force-dynamic'
 
 export default async function AudiencesPage({
@@ -41,61 +43,78 @@ export default async function AudiencesPage({
   const audiences = await listAudiences(access.tenant.id)
 
   return (
-    <main className="mx-auto w-full max-w-5xl space-y-6 p-4">
-      <header className="flex items-start justify-between gap-4">
-        <div className="space-y-1">
-          <h1 className="text-2xl font-semibold">Audiencias</h1>
-          <p className="text-sm text-muted-foreground">
-            Definí grupos de clientes para usar en difusiones y flows.
-          </p>
-        </div>
-        <Button asChild>
-          <Link href={`/${tenantSlug}/audiencias/nueva`}>Nueva audiencia</Link>
-        </Button>
-      </header>
+    <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <PageHeader
+        eyebrow="Marketing"
+        title="Audiencias"
+        description="Definí grupos de clientes con filtros precisos para usarlos en difusiones y flows."
+        actions={
+          <Button asChild className="gap-2">
+            <Link href={`/${tenantSlug}/audiencias/nueva`}>
+              <Plus className="size-4" />
+              Nueva audiencia
+            </Link>
+          </Button>
+        }
+      />
 
       {audiences.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-sm text-muted-foreground">
-            Todavía no hay audiencias. Tocá &quot;Nueva audiencia&quot; para empezar.
-          </CardContent>
-        </Card>
+        <EmptyState
+          icon={UsersRound}
+          title="Aún no hay audiencias"
+          description="Las audiencias son grupos de clientes con condiciones (ej: 'frecuentes que no vinieron en 30 días'). Sirven para difusiones y flows."
+          action={
+            <Button asChild className="gap-2">
+              <Link href={`/${tenantSlug}/audiencias/nueva`}>
+                <Plus className="size-4" />
+                Crear primera audiencia
+              </Link>
+            </Button>
+          }
+        />
       ) : (
-        <Card>
-          <CardContent className="p-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nombre</TableHead>
-                  <TableHead>Clientes</TableHead>
-                  <TableHead>Última calc.</TableHead>
-                  <TableHead aria-label="acciones" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
+        <DataTableShell>
+          <DataTableScroll>
+            <DataTableRoot>
+              <DataTableHead>
+                <tr>
+                  <DataTableHeader>Nombre</DataTableHeader>
+                  <DataTableHeader>Clientes</DataTableHeader>
+                  <DataTableHeader>Última calc.</DataTableHeader>
+                  <DataTableHeader className="w-8" />
+                </tr>
+              </DataTableHead>
+              <DataTableBody>
                 {audiences.map((a) => (
-                  <TableRow key={a.id}>
-                    <TableCell className="font-medium">{a.name}</TableCell>
-                    <TableCell>
-                      <Badge variant="secondary">{a.customer_count_cached}</Badge>
-                    </TableCell>
-                    <TableCell className="text-muted-foreground">
+                  <tr key={a.id} className="group transition-colors hover:bg-secondary/40">
+                    <DataTableCell>
+                      <Link
+                        href={`/${tenantSlug}/audiencias/${a.id}`}
+                        className="font-medium group-hover:text-primary"
+                      >
+                        {a.name}
+                      </Link>
+                    </DataTableCell>
+                    <DataTableCell>
+                      <span className="rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-semibold tabular-nums text-primary">
+                        {a.customer_count_cached.toLocaleString('es-AR')}
+                      </span>
+                    </DataTableCell>
+                    <DataTableCell className="text-xs text-muted-foreground">
                       {a.last_calculated_at
                         ? new Date(a.last_calculated_at).toLocaleString('es-AR')
                         : '—'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <Button asChild variant="ghost" size="sm">
-                        <Link href={`/${tenantSlug}/audiencias/${a.id}`}>Editar</Link>
-                      </Button>
-                    </TableCell>
-                  </TableRow>
+                    </DataTableCell>
+                    <DataTableCell className="text-muted-foreground/40 group-hover:text-muted-foreground">
+                      <ChevronRight className="size-4" />
+                    </DataTableCell>
+                  </tr>
                 ))}
-              </TableBody>
-            </Table>
-          </CardContent>
-        </Card>
+              </DataTableBody>
+            </DataTableRoot>
+          </DataTableScroll>
+        </DataTableShell>
       )}
-    </main>
+    </div>
   )
 }

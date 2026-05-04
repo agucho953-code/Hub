@@ -1,5 +1,6 @@
 'use client'
 
+import { Download, Pause, Play, Trash2 } from 'lucide-react'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import {
@@ -49,17 +50,33 @@ export function LinkActions({
 
   return (
     <div className="flex flex-wrap gap-2">
-      <Button asChild variant="outline" size="sm">
+      <Button asChild variant="outline" size="sm" className="gap-1.5">
         <a href={pngDataUrl} download={`qr-${link.slug}.png`}>
-          Descargar QR
+          <Download className="size-3.5" />
+          PNG
         </a>
       </Button>
-      <Button variant="outline" size="sm" disabled={pending} onClick={onToggle}>
-        {link.active ? 'Pausar' : 'Activar'}
+      <Button variant="outline" size="sm" disabled={pending} onClick={onToggle} className="gap-1.5">
+        {link.active ? (
+          <>
+            <Pause className="size-3.5" />
+            Pausar
+          </>
+        ) : (
+          <>
+            <Play className="size-3.5" />
+            Activar
+          </>
+        )}
       </Button>
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogTrigger asChild>
-          <Button variant="ghost" size="sm">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="gap-1.5 text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="size-3.5" />
             Borrar
           </Button>
         </AlertDialogTrigger>
@@ -73,7 +90,11 @@ export function LinkActions({
           </AlertDialogHeader>
           <AlertDialogFooter>
             <AlertDialogCancel disabled={pending}>Cancelar</AlertDialogCancel>
-            <AlertDialogAction onClick={onDelete} disabled={pending}>
+            <AlertDialogAction
+              onClick={onDelete}
+              disabled={pending}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
               {pending ? 'Borrando…' : 'Borrar'}
             </AlertDialogAction>
           </AlertDialogFooter>

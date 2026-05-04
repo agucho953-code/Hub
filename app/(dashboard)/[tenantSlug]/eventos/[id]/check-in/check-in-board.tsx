@@ -1,12 +1,11 @@
 'use client'
 
+import { CheckCircle2, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
 import type { ReservationRow } from '@/lib/events/queries'
 import { checkInReservation } from '@/lib/events/reservations'
 import { formatPhoneForDisplay } from '@/lib/phone'
@@ -54,17 +53,21 @@ export function CheckInBoard({
 
   return (
     <div className="space-y-4">
-      <Input
-        placeholder="Buscar nombre o teléfono…"
-        className="h-12 text-lg"
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        autoFocus
-      />
+      <label className="relative flex items-center">
+        <Search className="pointer-events-none absolute left-4 size-5 text-muted-foreground" />
+        <input
+          placeholder="Buscar nombre o teléfono…"
+          className="h-14 w-full rounded-2xl border border-border/60 bg-card/80 pl-12 pr-4 text-base shadow-sm backdrop-blur-xl outline-none placeholder:text-muted-foreground/70 focus:border-ring focus:ring-2 focus:ring-ring/40"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          // biome-ignore lint/a11y/noAutofocus: modo check-in dedicado, foco inmediato esperado
+          autoFocus
+        />
+      </label>
 
       <ul className="space-y-2">
         {visible.length === 0 ? (
-          <li className="rounded-md border bg-muted/40 px-4 py-8 text-center text-sm text-muted-foreground">
+          <li className="rounded-xl border border-dashed bg-card/40 px-4 py-12 text-center text-sm text-muted-foreground">
             Sin coincidencias.
           </li>
         ) : (
@@ -73,23 +76,27 @@ export function CheckInBoard({
             return (
               <li
                 key={r.id}
-                className="flex items-center gap-3 rounded-lg border bg-card px-3 py-3"
+                className={`card-hairline flex items-center gap-3 rounded-xl border bg-card px-4 py-3 transition-all ${checked ? 'opacity-70' : ''}`}
               >
                 <Avatar className="size-12">
-                  <AvatarFallback className="text-base">
+                  <AvatarFallback className="bg-secondary font-display text-base font-semibold">
                     {initials(r.customer.first_name, r.customer.last_name)}
                   </AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="text-base font-medium">
+                  <div className="font-display text-base font-semibold leading-tight">
                     {r.customer.first_name} {r.customer.last_name}
                   </div>
                   <div className="font-mono text-xs text-muted-foreground">
-                    {formatPhoneForDisplay(r.customer.phone)} · ×{r.guests_count}
+                    {formatPhoneForDisplay(r.customer.phone)} ·{' '}
+                    <span className="font-sans">×{r.guests_count}</span>
                   </div>
                 </div>
                 {checked ? (
-                  <Badge className="text-base">✓ OK</Badge>
+                  <span className="inline-flex items-center gap-1.5 rounded-full bg-success/15 px-3 py-1.5 text-sm font-semibold text-success">
+                    <CheckCircle2 className="size-4" />
+                    Ingresó
+                  </span>
                 ) : (
                   <Button size="lg" onClick={() => onCheckin(r.id)}>
                     Check-in

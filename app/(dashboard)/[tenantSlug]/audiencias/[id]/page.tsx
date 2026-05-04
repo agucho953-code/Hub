@@ -1,4 +1,7 @@
+import { ArrowLeft } from 'lucide-react'
+import Link from 'next/link'
 import { notFound } from 'next/navigation'
+import { PageHeader } from '@/components/ui/page-header'
 import { getAudience } from '@/lib/audiences/queries'
 import type { AudienceFilter } from '@/lib/audiences/schemas'
 import {
@@ -9,7 +12,7 @@ import {
 } from '@/lib/tenant'
 import { AudienceForm } from '../_components/audience-form'
 
-export const metadata = { title: 'Editar audiencia — HUB' }
+export const metadata = { title: 'Editar audiencia' }
 export const dynamic = 'force-dynamic'
 
 export default async function EditAudiencePage({
@@ -32,14 +35,25 @@ export default async function EditAudiencePage({
   if (!audience) notFound()
 
   return (
-    <main className="mx-auto w-full max-w-3xl space-y-6 p-4">
-      <h1 className="text-2xl font-semibold">Editar audiencia</h1>
+    <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
+      <Link
+        href={`/${tenantSlug}/audiencias`}
+        className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground"
+      >
+        <ArrowLeft className="size-3" />
+        Volver a audiencias
+      </Link>
+      <PageHeader
+        eyebrow="Marketing"
+        title="Editar audiencia"
+        description={`${audience.customer_count_cached.toLocaleString('es-AR')} clientes en la última corrida`}
+      />
       <AudienceForm
         tenantSlug={tenantSlug}
         audienceId={audience.id}
         initialName={audience.name}
         initialFilters={audience.filters as unknown as AudienceFilter}
       />
-    </main>
+    </div>
   )
 }

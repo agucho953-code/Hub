@@ -1,17 +1,19 @@
 'use client'
 
+import { Check, CheckCheck, Clock3, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import { createClient } from '@/lib/supabase/browser'
+import { cn } from '@/lib/utils'
 import type { MessageRow } from '../queries'
 
-function statusLabel(status: MessageRow['status']): string {
-  if (!status) return ''
-  if (status === 'queued') return 'enviando…'
-  if (status === 'sent') return 'enviado'
-  if (status === 'delivered') return 'entregado'
-  if (status === 'read') return 'leído'
-  if (status === 'failed') return 'falló'
-  return status
+function StatusIcon({ status }: { status: MessageRow['status'] }) {
+  if (!status) return null
+  if (status === 'queued') return <Clock3 className="size-3" />
+  if (status === 'sent') return <Check className="size-3" />
+  if (status === 'delivered') return <CheckCheck className="size-3" />
+  if (status === 'read') return <CheckCheck className="size-3 text-info" />
+  if (status === 'failed') return <TriangleAlert className="size-3 text-destructive" />
+  return null
 }
 
 export function MessageThread({
@@ -70,31 +72,37 @@ export function MessageThread({
   }, [conversationId])
 
   return (
-    <div className="flex-1 space-y-2 overflow-y-auto p-4">
+    <div className="flex-1 space-y-2 overflow-y-auto bg-secondary/15 px-5 py-6">
       {messages.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Sin mensajes.</p>
+        <p className="text-center text-xs text-muted-foreground">Sin mensajes.</p>
       ) : null}
       {messages.map((m) => {
         const outbound = m.direction === 'outbound'
         return (
-          <div key={m.id} className={`flex ${outbound ? 'justify-end' : 'justify-start'}`}>
+          <div key={m.id} className={cn('flex', outbound ? 'justify-end' : 'justify-start')}>
             <div
-              className={`max-w-[70%] rounded-lg px-3 py-2 text-sm ${
-                outbound ? 'bg-primary text-primary-foreground' : 'bg-muted'
-              }`}
+              className={cn(
+                'max-w-[75%] rounded-2xl px-3.5 py-2 text-sm shadow-sm',
+                outbound
+                  ? 'rounded-br-sm bg-primary text-primary-foreground'
+                  : 'rounded-bl-sm bg-card text-card-foreground border border-border/60',
+              )}
             >
-              <p className="whitespace-pre-wrap">{m.content ?? '(sin contenido)'}</p>
+              <p className="whitespace-pre-wrap text-pretty">{m.content ?? '(sin contenido)'}</p>
               <p
-                className={`mt-1 text-xs ${
-                  outbound ? 'text-primary-foreground/70' : 'text-muted-foreground'
-                }`}
+                className={cn(
+                  'mt-1 flex items-center justify-end gap-1 text-[10px]',
+                  outbound ? 'text-primary-foreground/70' : 'text-muted-foreground',
+                )}
               >
-                {new Date(m.sent_at ?? m.created_at).toLocaleTimeString('es-AR', {
-                  hour: '2-digit',
-                  minute: '2-digit',
-                })}
-                {outbound && m.status ? ` · ${statusLabel(m.status)}` : null}
-                {m.error ? ` · ${m.error}` : null}
+                <span className="tabular-nums">
+                  {new Date(m.sent_at ?? m.created_at).toLocaleTimeString('es-AR', {
+                    hour: '2-digit',
+                    minute: '2-digit',
+                  })}
+                </span>
+                {outbound && m.status ? <StatusIcon status={m.status} /> : null}
+                {m.error ? <span className="ml-1 truncate">· {m.error}</span> : null}
               </p>
             </div>
           </div>
