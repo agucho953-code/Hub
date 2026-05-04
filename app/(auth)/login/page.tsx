@@ -1,9 +1,12 @@
 import { LoginForm } from './login-form'
 
-export const metadata = {
-  title: 'Ingresar — HUB',
-}
+export const metadata = { title: 'Ingresar — HUB' }
 
-export default function LoginPage() {
-  return <LoginForm />
+export default async function LoginPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string; redirectTo?: string }>
+}) {
+  const { email, redirectTo } = await searchParams
+  return <LoginForm initialEmail={email ?? ''} redirectTo={redirectTo ?? ''} />
 }

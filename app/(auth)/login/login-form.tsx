@@ -20,7 +20,13 @@ function SubmitButton() {
   )
 }
 
-export function LoginForm() {
+export function LoginForm({
+  initialEmail,
+  redirectTo,
+}: {
+  initialEmail: string
+  redirectTo: string
+}) {
   const [state, formAction] = useActionState(sendMagicLink, initialState)
 
   useEffect(() => {
@@ -44,9 +50,11 @@ export function LoginForm() {
               type="email"
               required
               autoComplete="email"
+              defaultValue={initialEmail}
               placeholder="vos@bar.com"
             />
           </div>
+          <input type="hidden" name="redirectTo" value={redirectTo} />
           <SubmitButton />
         </form>
       </CardContent>

@@ -63,6 +63,10 @@ otp_expiry = 3600
 enable_signup = false
 enable_confirmations = false
 
+[auth.hook.custom_access_token]
+enabled = true
+uri = "pg-functions://postgres/public/custom_access_token_hook"
+
 [edge_runtime]
 enabled = true
 policy = "oneshot"

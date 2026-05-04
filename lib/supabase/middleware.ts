@@ -2,11 +2,11 @@ import { createServerClient } from '@supabase/ssr'
 import { type NextRequest, NextResponse } from 'next/server'
 import { getSupabaseClientEnv } from '@/lib/env'
 
-const PUBLIC_PATHS = ['/login', '/auth/callback']
-const PUBLIC_PREFIXES = ['/capture/', '/api/webhooks/', '/_next/', '/auth/']
+const PUBLIC_PATHS = new Set(['/login', '/auth/callback'])
+const PUBLIC_PREFIXES = ['/capture/', '/api/webhooks/', '/_next/', '/auth/', '/accept-invite/']
 
 function isPublicPath(pathname: string) {
-  if (PUBLIC_PATHS.includes(pathname)) return true
+  if (PUBLIC_PATHS.has(pathname)) return true
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true
   if (pathname === '/favicon.ico' || pathname.startsWith('/static/')) return true
   return false
@@ -37,11 +37,17 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser()
 
-  if (!user && !isPublicPath(request.nextUrl.pathname)) {
+  const { pathname } = request.nextUrl
+
+  if (!user && !isPublicPath(pathname)) {
     const loginUrl = request.nextUrl.clone()
     loginUrl.pathname = '/login'
-    loginUrl.searchParams.set('redirectTo', request.nextUrl.pathname)
+    loginUrl.searchParams.set('redirectTo', pathname)
     return NextResponse.redirect(loginUrl)
+  }
+
+  if (user && pathname === '/login') {
+    return NextResponse.redirect(new URL('/', request.url))
   }
 
   return response
