@@ -12,6 +12,13 @@ export function getServiceClient(): SupabaseClient {
   })
 }
 
+/** Cliente anon sin sesión iniciada — para testear RPCs públicas */
+export function getAnonClient(): SupabaseClient {
+  return createClient(SUPABASE_URL, ANON, {
+    auth: { autoRefreshToken: false, persistSession: false },
+  })
+}
+
 /** Crea un usuario y devuelve un cliente con sesión iniciada */
 export async function createUserClient(opts: {
   email: string

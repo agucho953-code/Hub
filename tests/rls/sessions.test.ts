@@ -3,6 +3,7 @@ import {
   createTenant,
   createUserClient,
   deleteUser,
+  getAnonClient,
   getServiceClient,
   RLS_TESTS_ENABLED,
   uniqueEmail,
@@ -125,5 +126,138 @@ describeIfRls('RLS — sessions / guests / events (read-only para authenticated)
   it('tenantB exists for cross-tenant isolation tests', () => {
     // Sanity check: tenantB se usa en los tests anteriores via ownerB.
     expect(tenantB.id).toBeDefined()
+  })
+})
+
+describeIfRls('RPCs públicas — get_session_state / join / register', () => {
+  let owner: Awaited<ReturnType<typeof createUserClient>>
+  let tenant: { id: string; slug: string }
+  let qrToken: string
+
+  beforeAll(async () => {
+    owner = await createUserClient({ email: uniqueEmail('rpc') })
+    tenant = await createTenant({
+      name: 'RPC Bar',
+      slug: uniqueSlug('rpc-bar'),
+      ownerId: owner.userId,
+    })
+    const service = getServiceClient()
+    const { data: pt } = await service
+      .from('physical_tables')
+      .insert({ tenant_id: tenant.id, label: 'RPC-T1' })
+      .select('qr_token')
+      .single()
+    if (!pt) throw new Error('failed to seed physical_table for RPC tests')
+    qrToken = pt.qr_token
+  })
+
+  afterAll(async () => {
+    await deleteUser(owner.userId)
+  })
+
+  it('get_session_state opens a new session on first scan', async () => {
+    const anon = getAnonClient()
+    const { data, error } = await anon.rpc('get_session_state', {
+      p_qr_token: qrToken,
+      p_browser_token: 'rpcBrowserToken1',
+    })
+    expect(error).toBeNull()
+    expect(data).toMatchObject({
+      table_label: 'RPC-T1',
+      tenant_name: 'RPC Bar',
+      was_new_session: true,
+      guest_id: null,
+    })
+  })
+
+  it('get_session_state returns same session on second scan', async () => {
+    const anon = getAnonClient()
+    const { data } = await anon.rpc('get_session_state', {
+      p_qr_token: qrToken,
+      p_browser_token: 'rpcBrowserToken1',
+    })
+    expect(data).toMatchObject({ was_new_session: false })
+  })
+
+  it('get_session_state with invalid qr_token raises', async () => {
+    const anon = getAnonClient()
+    const { error } = await anon.rpc('get_session_state', {
+      p_qr_token: 'doesNotExistAtAll',
+      p_browser_token: 'rpcBrowserToken1',
+    })
+    expect(error?.message).toContain('invalid_qr_token')
+  })
+
+  it('join_session_as_guest creates a guest', async () => {
+    const anon = getAnonClient()
+    const { data, error } = await anon.rpc('join_session_as_guest', {
+      p_qr_token: qrToken,
+      p_browser_token: 'rpcGuestToken123',
+      p_display_name: 'Lucia',
+    })
+    expect(error).toBeNull()
+    expect(data).toMatchObject({ was_new_guest: true })
+    const result = data as { guest_id: string }
+    expect(result.guest_id).toBeDefined()
+  })
+
+  it('join_session_as_guest is idempotent on second call', async () => {
+    const anon = getAnonClient()
+    const { data } = await anon.rpc('join_session_as_guest', {
+      p_qr_token: qrToken,
+      p_browser_token: 'rpcGuestToken123',
+      p_display_name: 'Lucia',
+    })
+    expect(data).toMatchObject({ was_new_guest: false })
+  })
+
+  it('register_customer_for_session creates a new customer and links the guest', async () => {
+    const anon = getAnonClient()
+    await anon.rpc('join_session_as_guest', {
+      p_qr_token: qrToken,
+      p_browser_token: 'rpcRegisterToken1',
+      p_display_name: null,
+    })
+    const { data, error } = await anon.rpc('register_customer_for_session', {
+      p_qr_token: qrToken,
+      p_browser_token: 'rpcRegisterToken1',
+      p_phone: '+5491134567890',
+      p_first_name: 'Carla',
+      p_last_name: 'Roldan',
+      p_birthdate: '1985-03-12',
+      p_opt_in_marketing: true,
+      p_ip: '10.0.0.1',
+      p_user_agent: 'vitest',
+    })
+    expect(error).toBeNull()
+    expect(data).toMatchObject({ was_new_customer: true })
+  })
+
+  it('register_customer_for_session deduplicates by phone within the tenant', async () => {
+    const anon = getAnonClient()
+    const service = getServiceClient()
+    const { data: pt2 } = await service
+      .from('physical_tables')
+      .insert({ tenant_id: tenant.id, label: 'RPC-T2' })
+      .select('qr_token')
+      .single()
+    if (!pt2) throw new Error('failed to seed physical_table for dedupe test')
+    await anon.rpc('join_session_as_guest', {
+      p_qr_token: pt2.qr_token,
+      p_browser_token: 'rpcDupToken12345',
+      p_display_name: null,
+    })
+    const { data } = await anon.rpc('register_customer_for_session', {
+      p_qr_token: pt2.qr_token,
+      p_browser_token: 'rpcDupToken12345',
+      p_phone: '+5491134567890',
+      p_first_name: 'Carla',
+      p_last_name: 'Roldan',
+      p_birthdate: null,
+      p_opt_in_marketing: false,
+      p_ip: null,
+      p_user_agent: null,
+    })
+    expect(data).toMatchObject({ was_new_customer: false })
   })
 })
