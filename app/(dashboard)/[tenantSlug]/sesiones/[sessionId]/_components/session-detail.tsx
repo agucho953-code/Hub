@@ -1,11 +1,13 @@
 'use client'
 
-import { Receipt } from 'lucide-react'
+import { Coins, Receipt } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
+import { Button } from '@/components/ui/button'
 import { subscribeChanges } from '@/lib/realtime/subscribe'
-import type { WaiterSessionDetail } from '@/lib/sessions-waiter/queries'
+import type { CobroBreakdown, WaiterSessionDetail } from '@/lib/sessions-waiter/queries'
 import type { TicketItemRow, TicketRow } from '@/lib/tickets/queries'
+import { CobrarDialog } from './cobrar-dialog'
 import { TicketCard } from './ticket-card'
 
 export function SessionDetail({
@@ -22,6 +24,9 @@ export function SessionDetail({
   const [tickets, setTickets] = useState(initialTickets)
   const [items, setItems] = useState(initialItems)
   const [billRequested, setBillRequested] = useState(session.bill_requested)
+  const [showCobro, setShowCobro] = useState(false)
+  const [breakdown, setBreakdown] = useState<CobroBreakdown | null>(null)
+  const [sessionStatus, setSessionStatus] = useState(session.status)
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/sessions/${encodeURIComponent(session.id)}/snapshot`, {
@@ -32,12 +37,24 @@ export function SessionDetail({
         tickets: TicketRow[]
         items: TicketItemRow[]
         bill_requested: boolean
+        status?: string
       }
       setTickets(data.tickets)
       setItems(data.items)
       setBillRequested(data.bill_requested)
+      if (data.status) setSessionStatus(data.status)
     }
   }, [session.id])
+
+  const openCobro = async () => {
+    const res = await fetch(`/api/sessions/${encodeURIComponent(session.id)}/breakdown`, {
+      cache: 'no-store',
+    })
+    if (!res.ok) return
+    const data = (await res.json()) as { breakdown: CobroBreakdown }
+    setBreakdown(data.breakdown)
+    setShowCobro(true)
+  }
 
   useEffect(() => {
     const cleanup = subscribeChanges({
@@ -70,7 +87,22 @@ export function SessionDetail({
 
   return (
     <div className="space-y-4">
-      {billRequested && (
+      {sessionStatus === 'open' && (
+        <div className="flex justify-end">
+          <Button onClick={openCobro} size="sm">
+            <Coins className="mr-1.5 size-4" />
+            Cobrar mesa
+          </Button>
+        </div>
+      )}
+
+      {sessionStatus === 'paid' && (
+        <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+          Sesión cobrada. La mesa quedó libre y el QR rotó.
+        </div>
+      )}
+
+      {billRequested && sessionStatus === 'open' && (
         <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm">
           <Receipt className="size-4 text-destructive" />
           <span>El comensal pidió la cuenta.</span>
@@ -111,6 +143,20 @@ export function SessionDetail({
           )}
         </div>
       </section>
+
+      {showCobro && breakdown && (
+        <CobrarDialog
+          tenantSlug={tenantSlug}
+          sessionId={session.id}
+          breakdown={breakdown}
+          open={showCobro}
+          onClose={() => setShowCobro(false)}
+          onPaid={() => {
+            setShowCobro(false)
+            void refresh()
+          }}
+        />
+      )}
     </div>
   )
 }

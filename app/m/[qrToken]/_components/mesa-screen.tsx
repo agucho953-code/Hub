@@ -14,6 +14,7 @@ import {
 import { getOrCreateBrowserToken } from '@/lib/m-session/browser-token'
 import { subscribeChanges } from '@/lib/realtime/subscribe'
 import { CartSheet } from './cart-sheet'
+import { ClosingScreen } from './closing-screen'
 import { MenuList } from './menu-list'
 import { MyOrdersPane } from './my-orders-pane'
 import { RegisterDialog } from './register-dialog'
@@ -42,6 +43,7 @@ export function MesaScreen({
   const [cart, setCart] = useState<CartItem[]>([])
   const [error, setError] = useState<string | null>(null)
   const [billPending, setBillPending] = useState(false)
+  const [paid, setPaid] = useState(false)
   const sessionIdRef = useRef<string | null>(null)
 
   useEffect(() => {
@@ -90,6 +92,15 @@ export function MesaScreen({
           onChange: () => void refresh(),
         },
         { event: '*', table: 'ticket_items', onChange: () => void refresh() },
+        {
+          event: 'UPDATE',
+          table: 'table_sessions',
+          filter: `id=eq.${sessionId}`,
+          onChange: (payload: unknown) => {
+            const p = payload as { new?: { status?: string } } | null
+            if (p?.new?.status === 'paid') setPaid(true)
+          },
+        },
       ],
     })
     return cleanup
@@ -158,6 +169,10 @@ export function MesaScreen({
         <p className="text-sm text-muted-foreground">{error}</p>
       </div>
     )
+  }
+
+  if (paid) {
+    return <ClosingScreen tenantName={tenantName} tableLabel={tableLabel} state={state} />
   }
 
   return (

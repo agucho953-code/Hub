@@ -21,5 +21,6 @@ export async function GET(_req: Request, { params }: { params: Promise<{ session
     tickets,
     items,
     bill_requested: session.bill_requested,
+    status: session.status,
   })
 }

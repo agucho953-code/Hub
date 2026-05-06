@@ -132,3 +132,91 @@ export async function getSessionForWaiter(sessionId: string): Promise<WaiterSess
     bill_requested: Boolean(billEvent),
   }
 }
+
+export type CobroBreakdownGuest = {
+  guest_id: string
+  customer_id: string | null
+  display_name: string | null
+  total_cents: number
+  items: Array<{ name: string; quantity: number; line_total_cents: number }>
+}
+
+export type CobroBreakdown = {
+  session_id: string
+  total_cents: number
+  guests: CobroBreakdownGuest[]
+  shared_total_cents: number
+  shared_items: Array<{ name: string; quantity: number; line_total_cents: number }>
+}
+
+export async function getCobroBreakdown(sessionId: string): Promise<CobroBreakdown | null> {
+  const supabase = await createClient()
+  const { data: session } = await supabase
+    .from('table_sessions')
+    .select('id, total_cents')
+    .eq('id', sessionId)
+    .maybeSingle()
+  if (!session) return null
+
+  const { data: guests } = await supabase
+    .from('session_guests')
+    .select('id, display_name, customer_id')
+    .eq('session_id', sessionId)
+    .order('joined_at', { ascending: true })
+
+  const { data: items } = await supabase
+    .from('ticket_items')
+    .select(
+      'quantity, line_total_cents, assigned_to_guest_id, cancelled_at, menu_items(name), tickets!inner(session_id, status)',
+    )
+    .eq('tickets.session_id', sessionId)
+    .neq('tickets.status', 'cancelled')
+    .is('cancelled_at', null)
+
+  type Joined = {
+    quantity: number
+    line_total_cents: number
+    assigned_to_guest_id: string | null
+    cancelled_at: string | null
+    menu_items: { name: string } | { name: string }[] | null
+  }
+
+  const byGuest = new Map<string, CobroBreakdownGuest>()
+  for (const g of guests ?? []) {
+    byGuest.set(g.id, {
+      guest_id: g.id,
+      customer_id: g.customer_id,
+      display_name: g.display_name,
+      total_cents: 0,
+      items: [],
+    })
+  }
+
+  let sharedTotal = 0
+  const sharedItems: CobroBreakdown['shared_items'] = []
+
+  for (const raw of items ?? []) {
+    const r = raw as unknown as Joined
+    const mi = Array.isArray(r.menu_items) ? r.menu_items[0] : r.menu_items
+    const name = mi?.name ?? 'Ítem'
+    const line = { name, quantity: r.quantity, line_total_cents: r.line_total_cents }
+    if (r.assigned_to_guest_id && byGuest.has(r.assigned_to_guest_id)) {
+      const g = byGuest.get(r.assigned_to_guest_id)
+      if (g) {
+        g.items.push(line)
+        g.total_cents += r.line_total_cents
+      }
+    } else {
+      sharedItems.push(line)
+      sharedTotal += r.line_total_cents
+    }
+  }
+
+  return {
+    session_id: session.id,
+    total_cents: session.total_cents,
+    guests: Array.from(byGuest.values()),
+    shared_total_cents: sharedTotal,
+    shared_items: sharedItems,
+  }
+}
