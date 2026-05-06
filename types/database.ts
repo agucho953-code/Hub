@@ -2,7 +2,7 @@
 // esté corriendo y la migración aplicada.
 export type Json = string | number | boolean | null | { [key: string]: Json | undefined } | Json[]
 
-export type TenantRole = 'owner' | 'cashier' | 'waiter'
+export type TenantRole = 'owner' | 'cashier' | 'waiter' | 'kitchen'
 export type CustomerSource = 'qr' | 'manual' | 'import'
 export type VisitSource = 'cashier' | 'import'
 export type PointsRuleType = 'per_amount' | 'per_item'
