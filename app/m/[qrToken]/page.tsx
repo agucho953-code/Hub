@@ -17,7 +17,7 @@ export default async function MesaPage({ params }: { params: Promise<{ qrToken: 
     .eq('qr_token', qrToken)
     .maybeSingle()
 
-  if (!table || !table.active) notFound()
+  if (!table?.active) notFound()
 
   const { data: tenant } = await service
     .from('tenants')
