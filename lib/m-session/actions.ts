@@ -4,7 +4,13 @@ import type { z } from 'zod'
 import { getRequestIp, getRequestUserAgent } from '@/lib/ip'
 import { RateLimitedError, rateLimit } from '@/lib/rate-limit'
 import { createClient } from '@/lib/supabase/server'
-import { joinSessionSchema, registerCustomerSchema } from './schemas'
+import {
+  cancelTicketSchema,
+  joinSessionSchema,
+  registerCustomerSchema,
+  requestBillSchema,
+  submitTicketSchema,
+} from './schemas'
 
 export type JoinSessionResult =
   | { ok: true; sessionId: string; guestId: string; wasNewGuest: boolean }
@@ -144,4 +150,213 @@ export async function registerCustomer(formData: FormData): Promise<RegisterCust
     customerId: result.customer_id,
     wasNewCustomer: result.was_new_customer,
   }
+}
+
+export type SubmitTicketResult =
+  | {
+      ok: true
+      ticketId: string
+      status: string
+      idempotentReplay: boolean
+      totalCents?: number
+    }
+  | { ok: false; message: string }
+
+export type CancelTicketResult = { ok: true } | { ok: false; message: string }
+
+export type RequestBillResult =
+  | { ok: true; alreadyRequested: boolean }
+  | { ok: false; message: string }
+
+export type SessionStateData = {
+  session_id: string
+  tenant_id: string
+  tenant_name: string
+  table_label: string
+  guest_id: string | null
+  customer_id: string | null
+  guest_count: number
+  was_new_session: boolean
+  menu: Array<{
+    id: string
+    name: string
+    position: number
+    items: Array<{
+      id: string
+      name: string
+      description: string | null
+      price_cents: number
+      image_url: string | null
+      position: number
+    }>
+  }>
+  my_tickets: Array<{
+    id: string
+    status: string
+    submitted_at: string
+    total_cents: number
+    cancellation_reason: string | null
+    items: Array<{
+      id: string
+      menu_item_name: string | null
+      quantity: number
+      unit_price_cents: number
+      line_total_cents: number
+      notes: string | null
+      cancelled_at: string | null
+    }>
+  }>
+}
+
+export type SessionStateResult =
+  | { ok: true; data: SessionStateData }
+  | { ok: false; message: string }
+
+export async function refreshState(params: {
+  qrToken: string
+  browserToken: string
+}): Promise<SessionStateResult> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_session_state', {
+    p_qr_token: params.qrToken,
+    p_browser_token: params.browserToken,
+  })
+  if (error) {
+    if (error.message.includes('invalid_qr_token')) {
+      return { ok: false, message: 'El QR no es válido.' }
+    }
+    console.error('[m-session.refreshState]', error.message)
+    return { ok: false, message: 'No se pudo cargar la mesa.' }
+  }
+  return { ok: true, data: data as SessionStateData }
+}
+
+export async function submitTicket(params: {
+  qrToken: string
+  browserToken: string
+  items: Array<{
+    menu_item_id: string
+    quantity: number
+    notes?: string | null
+    assigned_to_guest_id?: string | null
+  }>
+  idempotencyKey: string
+}): Promise<SubmitTicketResult> {
+  const ip = await getRequestIp()
+  try {
+    rateLimit({ key: `m-submit:${ip}`, limit: 60, windowMs: 60_000 })
+  } catch (e) {
+    if (e instanceof RateLimitedError) {
+      return { ok: false, message: 'Demasiados pedidos seguidos. Esperá un momento.' }
+    }
+    throw e
+  }
+
+  const parsed = submitTicketSchema.safeParse({
+    qr_token: params.qrToken,
+    browser_token: params.browserToken,
+    items: params.items,
+    idempotency_key: params.idempotencyKey,
+  })
+  if (!parsed.success) {
+    return { ok: false, message: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+  }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('submit_ticket', {
+    p_qr_token: parsed.data.qr_token,
+    p_browser_token: parsed.data.browser_token,
+    p_items: parsed.data.items.map((i) => ({
+      menu_item_id: i.menu_item_id,
+      quantity: i.quantity,
+      notes: i.notes ?? null,
+      assigned_to_guest_id: i.assigned_to_guest_id ?? null,
+    })),
+    p_idempotency_key: parsed.data.idempotency_key,
+  })
+
+  if (error) {
+    if (error.message.includes('no_active_session')) {
+      return { ok: false, message: 'La sesión no está activa.' }
+    }
+    if (error.message.includes('guest_not_found')) {
+      return { ok: false, message: 'Volvé a escanear el QR.' }
+    }
+    if (error.message.includes('menu_item_not_available')) {
+      return { ok: false, message: 'Algún ítem ya no está disponible.' }
+    }
+    if (error.message.includes('empty_cart')) {
+      return { ok: false, message: 'Tu carrito está vacío.' }
+    }
+    console.error('[m-session.submitTicket]', error.message)
+    return { ok: false, message: 'No pudimos enviar tu pedido.' }
+  }
+
+  const result = data as {
+    ticket_id: string
+    status: string
+    total_cents?: number
+    idempotent_replay: boolean
+  }
+  return {
+    ok: true,
+    ticketId: result.ticket_id,
+    status: result.status,
+    idempotentReplay: result.idempotent_replay,
+    totalCents: result.total_cents,
+  }
+}
+
+export async function cancelTicket(params: {
+  ticketId: string
+  browserToken: string
+}): Promise<CancelTicketResult> {
+  const parsed = cancelTicketSchema.safeParse({
+    ticket_id: params.ticketId,
+    browser_token: params.browserToken,
+  })
+  if (!parsed.success) return { ok: false, message: 'Datos inválidos.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('cancel_pending_ticket', {
+    p_ticket_id: parsed.data.ticket_id,
+    p_browser_token: parsed.data.browser_token,
+  })
+  if (error) {
+    if (error.message.includes('cancel_window_expired')) {
+      return { ok: false, message: 'Ya pasó el tiempo para cancelar.' }
+    }
+    if (error.message.includes('ticket_not_cancellable')) {
+      return { ok: false, message: 'Esta comanda ya no se puede cancelar.' }
+    }
+    console.error('[m-session.cancelTicket]', error.message)
+    return { ok: false, message: 'No se pudo cancelar.' }
+  }
+  return { ok: true }
+}
+
+export async function requestBill(params: {
+  qrToken: string
+  browserToken: string
+}): Promise<RequestBillResult> {
+  const parsed = requestBillSchema.safeParse({
+    qr_token: params.qrToken,
+    browser_token: params.browserToken,
+  })
+  if (!parsed.success) return { ok: false, message: 'Datos inválidos.' }
+
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('request_bill', {
+    p_qr_token: parsed.data.qr_token,
+    p_browser_token: parsed.data.browser_token,
+  })
+  if (error) {
+    if (error.message.includes('no_active_session')) {
+      return { ok: false, message: 'La sesión no está activa.' }
+    }
+    console.error('[m-session.requestBill]', error.message)
+    return { ok: false, message: 'No se pudo avisar al mozo.' }
+  }
+  const result = data as { already_requested?: boolean; requested?: boolean }
+  return { ok: true, alreadyRequested: Boolean(result.already_requested) }
 }

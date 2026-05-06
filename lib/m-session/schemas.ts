@@ -42,3 +42,29 @@ export const registerCustomerSchema = z.object({
   // honeypot
   website: z.string().optional(),
 })
+
+export const submitTicketSchema = z.object({
+  qr_token: qrTokenField,
+  browser_token: browserTokenField,
+  items: z
+    .array(
+      z.object({
+        menu_item_id: z.string().uuid(),
+        quantity: z.coerce.number().int().min(1).max(50),
+        notes: z.string().trim().max(200).nullable().optional(),
+        assigned_to_guest_id: z.string().uuid().nullable().optional(),
+      }),
+    )
+    .min(1, 'Tu carrito está vacío'),
+  idempotency_key: z.string().min(8).max(64),
+})
+
+export const cancelTicketSchema = z.object({
+  ticket_id: z.string().uuid(),
+  browser_token: browserTokenField,
+})
+
+export const requestBillSchema = z.object({
+  qr_token: qrTokenField,
+  browser_token: browserTokenField,
+})
