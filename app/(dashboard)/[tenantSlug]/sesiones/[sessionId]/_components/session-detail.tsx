@@ -1,10 +1,28 @@
 'use client'
 
-import { Coins, Receipt } from 'lucide-react'
-import { useCallback, useEffect, useState } from 'react'
+import { Coins, MoreVertical, Receipt, XCircle } from 'lucide-react'
+import { useCallback, useEffect, useState, useTransition } from 'react'
+import { toast } from 'sonner'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { subscribeChanges } from '@/lib/realtime/subscribe'
+import { markSessionAbandoned } from '@/lib/sessions-waiter/actions'
 import type { CobroBreakdown, WaiterSessionDetail } from '@/lib/sessions-waiter/queries'
 import type { TicketItemRow, TicketRow } from '@/lib/tickets/queries'
 import { CobrarDialog } from './cobrar-dialog'
@@ -27,6 +45,8 @@ export function SessionDetail({
   const [showCobro, setShowCobro] = useState(false)
   const [breakdown, setBreakdown] = useState<CobroBreakdown | null>(null)
   const [sessionStatus, setSessionStatus] = useState(session.status)
+  const [showAbandonConfirm, setShowAbandonConfirm] = useState(false)
+  const [opPending, startOp] = useTransition()
 
   const refresh = useCallback(async () => {
     const res = await fetch(`/api/sessions/${encodeURIComponent(session.id)}/snapshot`, {
@@ -54,6 +74,19 @@ export function SessionDetail({
     const data = (await res.json()) as { breakdown: CobroBreakdown }
     setBreakdown(data.breakdown)
     setShowCobro(true)
+  }
+
+  const handleAbandon = () => {
+    startOp(async () => {
+      const r = await markSessionAbandoned(tenantSlug, session.id, 'Mozo cerró manualmente')
+      if (r.ok) {
+        toast.success('Sesión marcada como abandoned')
+        setShowAbandonConfirm(false)
+        void refresh()
+      } else {
+        toast.error(r.message)
+      }
+    })
   }
 
   useEffect(() => {
@@ -88,11 +121,27 @@ export function SessionDetail({
   return (
     <div className="space-y-4">
       {sessionStatus === 'open' && (
-        <div className="flex justify-end">
+        <div className="flex justify-end gap-2">
           <Button onClick={openCobro} size="sm">
             <Coins className="mr-1.5 size-4" />
             Cobrar mesa
           </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button size="sm" variant="ghost">
+                <MoreVertical className="size-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuItem
+                onClick={() => setShowAbandonConfirm(true)}
+                className="text-destructive"
+              >
+                <XCircle className="mr-1.5 size-4" />
+                Marcar abandoned
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       )}
 
@@ -101,6 +150,30 @@ export function SessionDetail({
           Sesión cobrada. La mesa quedó libre y el QR rotó.
         </div>
       )}
+
+      {sessionStatus === 'abandoned' && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+          Sesión marcada como abandoned. No se generaron puntos.
+        </div>
+      )}
+
+      <AlertDialog open={showAbandonConfirm} onOpenChange={setShowAbandonConfirm}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Marcar como abandoned</AlertDialogTitle>
+            <AlertDialogDescription>
+              Esto cierra la sesión sin cobrar y sin generar puntos. Usalo cuando la mesa se fue sin
+              pagar. Quedan registradas las comandas para auditoría.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancelar</AlertDialogCancel>
+            <AlertDialogAction onClick={handleAbandon} disabled={opPending}>
+              {opPending ? 'Marcando…' : 'Sí, marcar abandoned'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {billRequested && sessionStatus === 'open' && (
         <div className="flex items-center gap-2 rounded-xl border border-destructive/40 bg-destructive/5 p-3 text-sm">

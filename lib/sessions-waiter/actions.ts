@@ -93,3 +93,128 @@ export async function markSessionPaid(slug: string, sessionId: string): Promise<
     totalPoints: result.total_points,
   }
 }
+
+export type SessionOpResult = { ok: true; message?: string } | { ok: false; message: string }
+
+async function authorizeOps(slug: string) {
+  try {
+    const { tenant, role } = await requireTenantAccess(slug)
+    requireRole(role, ['waiter', 'owner'])
+    return { tenant, role }
+  } catch (error) {
+    if (
+      error instanceof RoleRequiredError ||
+      error instanceof TenantNotFoundError ||
+      error instanceof UnauthenticatedError
+    ) {
+      return null
+    }
+    throw error
+  }
+}
+
+export async function markSessionAbandoned(
+  slug: string,
+  sessionId: string,
+  reason: string,
+): Promise<SessionOpResult> {
+  const access = await authorizeOps(slug)
+  if (!access) return { ok: false, message: 'No tenés permiso.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('mark_session_abandoned', {
+    p_session_id: sessionId,
+    p_reason: reason,
+  })
+  if (error) {
+    if (error.message.includes('session_not_open')) {
+      return { ok: false, message: 'La sesión no está abierta.' }
+    }
+    console.error('[sessions.abandon]', error.message)
+    return { ok: false, message: 'No se pudo marcar como abandonada.' }
+  }
+  revalidatePath(`/${slug}/sesiones`)
+  revalidatePath(`/${slug}/sesiones/${sessionId}`)
+  return { ok: true }
+}
+
+export async function mergeSessionsAction(
+  slug: string,
+  survivorId: string,
+  absorbedIds: string[],
+): Promise<SessionOpResult> {
+  const access = await authorizeOps(slug)
+  if (!access) return { ok: false, message: 'No tenés permiso.' }
+
+  if (absorbedIds.length === 0) return { ok: false, message: 'Seleccioná al menos una sesión.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('merge_sessions', {
+    p_survivor_id: survivorId,
+    p_absorbed_ids: absorbedIds,
+  })
+  if (error) {
+    if (error.message.includes('cross_tenant_merge')) {
+      return { ok: false, message: 'No podés mergear sesiones de tenants distintos.' }
+    }
+    console.error('[sessions.merge]', error.message)
+    return { ok: false, message: 'No se pudo mergear.' }
+  }
+  revalidatePath(`/${slug}/sesiones`)
+  revalidatePath(`/${slug}/sesiones/${survivorId}`)
+  return { ok: true, message: `${absorbedIds.length} sesión(es) absorbida(s).` }
+}
+
+export async function moveSessionAction(
+  slug: string,
+  sessionId: string,
+  newPhysicalTableId: string,
+): Promise<SessionOpResult> {
+  const access = await authorizeOps(slug)
+  if (!access) return { ok: false, message: 'No tenés permiso.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('move_session', {
+    p_session_id: sessionId,
+    p_new_physical_table_id: newPhysicalTableId,
+  })
+  if (error) {
+    if (error.message.includes('target_table_busy')) {
+      return { ok: false, message: 'La mesa destino ya tiene una sesión abierta.' }
+    }
+    console.error('[sessions.move]', error.message)
+    return { ok: false, message: 'No se pudo mover.' }
+  }
+  revalidatePath(`/${slug}/sesiones`)
+  revalidatePath(`/${slug}/sesiones/${sessionId}`)
+  return { ok: true }
+}
+
+export async function splitSessionAction(
+  slug: string,
+  sourceId: string,
+  targetPhysicalTableId: string,
+  guestIds: string[],
+): Promise<SessionOpResult> {
+  const access = await authorizeOps(slug)
+  if (!access) return { ok: false, message: 'No tenés permiso.' }
+
+  if (guestIds.length === 0) return { ok: false, message: 'Seleccioná al menos un comensal.' }
+
+  const supabase = await createClient()
+  const { error } = await supabase.rpc('split_session', {
+    p_source_id: sourceId,
+    p_target_physical_table_id: targetPhysicalTableId,
+    p_guest_ids: guestIds,
+  })
+  if (error) {
+    if (error.message.includes('target_table_busy')) {
+      return { ok: false, message: 'La mesa destino ya tiene una sesión abierta.' }
+    }
+    console.error('[sessions.split]', error.message)
+    return { ok: false, message: 'No se pudo splitear.' }
+  }
+  revalidatePath(`/${slug}/sesiones`)
+  revalidatePath(`/${slug}/sesiones/${sourceId}`)
+  return { ok: true }
+}
