@@ -1,17 +1,36 @@
 'use client'
 
 import { CheckCircle2, Sparkles } from 'lucide-react'
-import type { SessionStateData } from '@/lib/m-session/actions'
+import { useEffect, useState } from 'react'
+import { getLoyaltyState, type LoyaltyState, type SessionStateData } from '@/lib/m-session/actions'
 
 export function ClosingScreen({
+  qrToken,
+  browserToken,
   tenantName,
   tableLabel,
   state,
 }: {
+  qrToken: string
+  browserToken: string | null
   tenantName: string
   tableLabel: string
   state: SessionStateData | null
 }) {
+  const [loyalty, setLoyalty] = useState<LoyaltyState | null>(null)
+
+  useEffect(() => {
+    if (!browserToken || !state?.customer_id) return
+    let cancelled = false
+    void (async () => {
+      const r = await getLoyaltyState({ qrToken, browserToken })
+      if (!cancelled && r.ok) setLoyalty(r.data)
+    })()
+    return () => {
+      cancelled = true
+    }
+  }, [browserToken, qrToken, state?.customer_id])
+
   const myTotal = state
     ? state.my_tickets
         .filter((t) => t.status !== 'cancelled')
@@ -59,15 +78,54 @@ export function ClosingScreen({
         </ul>
       </div>
 
-      {isRegistered ? (
+      {isRegistered && loyalty?.registered ? (
+        <div className="card-hairline space-y-3 rounded-2xl border bg-primary/5 p-5 text-left shadow-sm">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2 text-sm font-medium">
+              <Sparkles className="size-4 text-primary" />
+              Hola {loyalty.first_name}
+            </div>
+            <div className="text-right">
+              <p className="font-display text-lg font-semibold">{loyalty.points_balance ?? 0}</p>
+              <p className="text-[10px] uppercase tracking-wide text-muted-foreground">puntos</p>
+            </div>
+          </div>
+
+          {loyalty.active_cards && loyalty.active_cards.length > 0 && (
+            <div className="space-y-2 border-t pt-3">
+              <p className="text-xs font-medium text-muted-foreground">Tus tarjetas activas</p>
+              {loyalty.active_cards.map((c) => (
+                <div key={c.card_id} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span>{c.template_name}</span>
+                    <span className="font-mono">
+                      {c.current_stamps}/{c.threshold}
+                    </span>
+                  </div>
+                  <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className="h-full bg-primary transition-all"
+                      style={{
+                        width: `${Math.min(100, (c.current_stamps / c.threshold) * 100)}%`,
+                      }}
+                    />
+                  </div>
+                  {c.current_stamps >= c.threshold && (
+                    <p className="text-xs text-emerald-700">
+                      🎉 Completaste — te ganaste: {c.reward_name}
+                    </p>
+                  )}
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+      ) : isRegistered ? (
         <div className="card-hairline space-y-2 rounded-2xl border bg-primary/5 p-5 text-left shadow-sm">
           <div className="flex items-center gap-2 text-sm font-medium">
             <Sparkles className="size-4 text-primary" />
             Tus puntos ya están sumados
           </div>
-          <p className="text-xs text-muted-foreground">
-            La próxima vez que vengas, mostrá tu teléfono al mozo para canjear.
-          </p>
         </div>
       ) : (
         <div className="card-hairline space-y-2 rounded-2xl border border-dashed bg-card/60 p-5 text-left shadow-sm">

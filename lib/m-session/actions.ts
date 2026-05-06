@@ -335,6 +335,39 @@ export async function cancelTicket(params: {
   return { ok: true }
 }
 
+export type LoyaltyState = {
+  registered: boolean
+  customer_id?: string
+  first_name?: string
+  points_balance?: number
+  active_cards?: Array<{
+    card_id: string
+    template_id: string
+    template_name: string
+    description: string | null
+    image_url: string | null
+    current_stamps: number
+    threshold: number
+    reward_name: string
+  }>
+}
+
+export async function getLoyaltyState(params: {
+  qrToken: string
+  browserToken: string
+}): Promise<{ ok: true; data: LoyaltyState } | { ok: false; message: string }> {
+  const supabase = await createClient()
+  const { data, error } = await supabase.rpc('get_loyalty_state', {
+    p_qr_token: params.qrToken,
+    p_browser_token: params.browserToken,
+  })
+  if (error) {
+    console.error('[m-session.getLoyaltyState]', error.message)
+    return { ok: false, message: 'No se pudo cargar tu cuenta de puntos.' }
+  }
+  return { ok: true, data: data as LoyaltyState }
+}
+
 export async function requestBill(params: {
   qrToken: string
   browserToken: string

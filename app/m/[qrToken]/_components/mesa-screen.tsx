@@ -172,7 +172,15 @@ export function MesaScreen({
   }
 
   if (paid) {
-    return <ClosingScreen tenantName={tenantName} tableLabel={tableLabel} state={state} />
+    return (
+      <ClosingScreen
+        qrToken={qrToken}
+        browserToken={browserToken}
+        tenantName={tenantName}
+        tableLabel={tableLabel}
+        state={state}
+      />
+    )
   }
 
   return (
