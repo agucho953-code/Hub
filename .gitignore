@@ -56,3 +56,6 @@ Thumbs.db
 
 # Claude Code local
 .claude/
+
+# superpowers brainstorming workspace
+/.superpowers/
