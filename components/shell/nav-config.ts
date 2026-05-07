@@ -1,8 +1,11 @@
 import {
   BarChart3,
   CalendarDays,
+  ChefHat,
+  ClipboardList,
   Inbox,
   LayoutDashboard,
+  LayoutGrid,
   type LucideIcon,
   Megaphone,
   MessageSquareText,
@@ -10,12 +13,14 @@ import {
   Receipt,
   Settings2,
   Sparkles,
+  Stamp,
   Star,
   Tags,
   Users,
   UsersRound,
   UtensilsCrossed,
   Workflow,
+  Zap,
 } from 'lucide-react'
 import type { TenantRole } from '@/lib/tenant/types'
 
@@ -47,10 +52,23 @@ export const NAV_GROUPS: NavGroup[] = [
         exact: true,
       },
       {
-        label: 'Cerrar mesa',
+        label: 'Sesiones',
+        href: (s) => `/${s}/sesiones`,
+        icon: ClipboardList,
+        emphasis: true,
+        roles: ['owner', 'cashier', 'waiter'],
+      },
+      {
+        label: 'Cocina',
+        href: (s) => `/${s}/cocina`,
+        icon: ChefHat,
+        roles: ['owner', 'kitchen'],
+      },
+      {
+        label: 'Cerrar mesa (legacy)',
         href: (s) => `/${s}/visitas/nueva`,
         icon: Receipt,
-        emphasis: true,
+        roles: ['owner', 'cashier'],
       },
       {
         label: 'Clientes',
@@ -113,13 +131,37 @@ export const NAV_GROUPS: NavGroup[] = [
         roles: ['owner'],
       },
       {
+        label: 'Mesas',
+        href: (s) => `/${s}/configuracion/mesas`,
+        icon: LayoutGrid,
+        roles: ['owner'],
+      },
+      {
         label: 'Puntos',
         href: (s) => `/${s}/configuracion/puntos`,
         icon: Star,
         roles: ['owner'],
       },
       {
-        label: 'Captura',
+        label: 'Punch cards',
+        href: (s) => `/${s}/configuracion/punch-cards`,
+        icon: Stamp,
+        roles: ['owner'],
+      },
+      {
+        label: 'Tags de carta',
+        href: (s) => `/${s}/configuracion/tags`,
+        icon: Tags,
+        roles: ['owner'],
+      },
+      {
+        label: 'Auto-aceptación',
+        href: (s) => `/${s}/configuracion/auto-aceptacion`,
+        icon: Zap,
+        roles: ['owner'],
+      },
+      {
+        label: 'Captura legacy',
         href: (s) => `/${s}/configuracion/captura`,
         icon: QrCode,
         roles: ['owner'],
@@ -139,7 +181,7 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Equipo',
         href: (s) => `/${s}/configuracion/equipo`,
-        icon: Tags,
+        icon: UsersRound,
         roles: ['owner'],
       },
       {
