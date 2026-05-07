@@ -79,6 +79,7 @@ export function MemberRow({
           <SelectItem value="owner">Owner</SelectItem>
           <SelectItem value="cashier">Cajero</SelectItem>
           <SelectItem value="waiter">Mozo</SelectItem>
+          <SelectItem value="kitchen">Cocina</SelectItem>
         </SelectContent>
       </Select>
       <AlertDialog open={open} onOpenChange={setOpen}>

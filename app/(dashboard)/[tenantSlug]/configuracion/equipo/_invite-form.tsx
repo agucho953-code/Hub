@@ -66,6 +66,7 @@ export function InviteForm({ tenantSlug }: { tenantSlug: string }) {
             <SelectItem value="owner">Owner</SelectItem>
             <SelectItem value="cashier">Cajero</SelectItem>
             <SelectItem value="waiter">Mozo</SelectItem>
+            <SelectItem value="kitchen">Cocina</SelectItem>
           </SelectContent>
         </Select>
       </div>
