@@ -101,7 +101,7 @@ export async function inviteMember(
   // Mandar email — si falla por config faltante o error de provider, no
   // abortamos: la invitación queda creada y el owner ve el link manual.
   const inviterName = user.user.user_metadata?.full_name ?? user.user.email ?? null
-  const { subject, html, text } = renderInvitationEmail({
+  const { subject, html, text } = await renderInvitationEmail({
     to: parsed.data.email,
     tenantName: tenant.name,
     inviterName,
