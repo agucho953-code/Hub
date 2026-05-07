@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BookOpen,
   CalendarDays,
   ChefHat,
   ClipboardList,
@@ -84,6 +85,16 @@ export const NAV_GROUPS: NavGroup[] = [
         label: 'Bandeja',
         href: (s) => `/${s}/bandeja`,
         icon: Inbox,
+      },
+    ],
+  },
+  {
+    label: 'Ayuda',
+    items: [
+      {
+        label: 'Documentación',
+        href: (s) => `/${s}/docs`,
+        icon: BookOpen,
       },
     ],
   },

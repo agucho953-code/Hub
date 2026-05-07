@@ -1,4 +1,5 @@
 import { ArrowDownRight, ArrowUpRight, Banknote, Receipt, Sparkles, Users } from 'lucide-react'
+import { redirect } from 'next/navigation'
 import { Sparkline } from '@/components/charts/sparkline'
 import { PageHeader } from '@/components/ui/page-header'
 import { StatCard } from '@/components/ui/stat-card'
@@ -85,6 +86,15 @@ export default async function TenantHomePage({
   const { tenantSlug } = await params
   const { tenant, role } = await requireTenantAccess(tenantSlug)
   const isOwner = role === 'owner'
+
+  // Si el owner no completó el onboarding wizard, redirigirlo allí.
+  if (isOwner) {
+    const settings = (tenant.settings ?? {}) as Record<string, unknown>
+    const onboarding = (settings.onboarding ?? {}) as { completed?: boolean }
+    if (!onboarding.completed) {
+      redirect(`/${tenantSlug}/onboarding`)
+    }
+  }
 
   const [kpis, daily60, topCustomers, onboarding] = await Promise.all([
     getKpis(tenant.id),
