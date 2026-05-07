@@ -11,9 +11,13 @@ export async function requireTenantAccess(
   } = await supabase.auth.getUser()
   if (!user) throw new UnauthenticatedError()
 
+  // Filtramos por user_id explícitamente: la RLS deja ver memberships
+  // de otros miembros del mismo bar, así que sin este eq() un bar con
+  // >1 miembro rompería el .maybeSingle() ("more than one row").
   const { data, error } = await supabase
     .from('memberships')
     .select('role, tenant:tenants!inner(*)')
+    .eq('user_id', user.id)
     .eq('tenant.slug', slug)
     .maybeSingle()
 

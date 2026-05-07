@@ -3,9 +3,9 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
-import { sendEmail } from '@/lib/email/send'
-import { renderInvitationEmail } from '@/lib/email/templates/invitation'
+import { emailSchema, passwordSchema } from '@/lib/auth/schemas'
 import { createClient } from '@/lib/supabase/server'
+import { createServiceClient } from '@/lib/supabase/service'
 import {
   RoleRequiredError,
   requireRole,
@@ -15,25 +15,27 @@ import {
 } from '@/lib/tenant'
 import { TENANT_ROLES, type TenantRole } from '@/lib/tenant/types'
 
-const inviteSchema = z.object({
-  email: z.string().email('Email inválido').toLowerCase(),
-  role: z.enum(TENANT_ROLES as [TenantRole, ...TenantRole[]]),
-})
-
 const idSchema = z.object({ id: z.string().uuid() })
 const updateRoleSchema = idSchema.extend({
   role: z.enum(TENANT_ROLES as [TenantRole, ...TenantRole[]]),
 })
+const createMemberSchema = z.object({
+  email: emailSchema,
+  password: passwordSchema,
+  role: z.enum(TENANT_ROLES as [TenantRole, ...TenantRole[]]),
+  full_name: z
+    .string()
+    .trim()
+    .max(80)
+    .optional()
+    .or(z.literal('').transform(() => undefined)),
+})
 
-export type ActionState =
-  | {
-      ok: true
-      message?: string
-      inviteLink?: string
-      emailSent?: boolean
-      emailError?: string
-    }
-  | { ok: false; message: string }
+export type CreateMemberState =
+  | { ok: true; created: 'new' | 'existing'; email: string; role: TenantRole }
+  | { ok: false; message: string; field?: 'email' | 'password' | 'role' | 'full_name' }
+
+export type ActionState = { ok: true; message?: string } | { ok: false; message: string }
 
 async function authorizeOwner(slug: string) {
   try {
@@ -52,127 +54,118 @@ async function authorizeOwner(slug: string) {
   }
 }
 
-export async function inviteMember(
+// ──────────────────────────────────────────────────────────
+// Crear miembro con contraseña directa
+//   - Si el email ya tiene cuenta: reusa y solo crea la membership
+//     (no le toca la contraseña existente).
+//   - Si no existe: crea cuenta confirmada y agrega membership.
+// ──────────────────────────────────────────────────────────
+export async function createMemberWithPassword(
   slug: string,
-  _prev: ActionState,
+  _prev: CreateMemberState | { ok: false; message: '' } | null,
   formData: FormData,
-): Promise<ActionState> {
+): Promise<CreateMemberState> {
   const tenant = await authorizeOwner(slug)
   if (!tenant) return { ok: false, message: 'No tenés permiso.' }
 
-  const parsed = inviteSchema.safeParse({
+  const parsed = createMemberSchema.safeParse({
     email: formData.get('email'),
+    password: formData.get('password'),
     role: formData.get('role'),
+    full_name: formData.get('full_name'),
   })
   if (!parsed.success) {
-    return { ok: false, message: parsed.error.issues[0]?.message ?? 'Datos inválidos' }
+    const issue = parsed.error.issues[0]
+    const field = issue?.path[0] as CreateMemberState extends { field?: infer F } ? F : never
+    return { ok: false, message: issue?.message ?? 'Datos inválidos', field }
   }
 
   const supabase = await createClient()
-  const { data: user } = await supabase.auth.getUser()
-  if (!user.user) return { ok: false, message: 'No autenticado.' }
+  const { data: meRes } = await supabase.auth.getUser()
+  const me = meRes.user
+  if (!me) return { ok: false, message: 'No autenticado.' }
 
-  // Si ya existe pendiente, regenerar token (UPSERT manual: delete+insert)
-  await supabase
-    .from('invitations')
-    .delete()
-    .eq('tenant_id', tenant.id)
-    .eq('email', parsed.data.email)
-    .is('accepted_at', null)
+  const service = createServiceClient()
 
-  const { data: invitation, error } = await supabase
-    .from('invitations')
-    .insert({
-      tenant_id: tenant.id,
-      email: parsed.data.email,
-      role: parsed.data.role,
-      invited_by: user.user.id,
-    })
-    .select('token')
-    .single()
-
-  if (error || !invitation) {
-    return { ok: false, message: 'No pudimos crear la invitación.' }
+  // 1. Buscar usuario por email (security definer).
+  const { data: existingId, error: findErr } = await service.rpc('find_user_id_by_email', {
+    p_email: parsed.data.email,
+  })
+  if (findErr) {
+    console.error('[equipo.create] find_user_id_by_email', findErr)
+    return { ok: false, message: 'No pudimos verificar el email. Probá de nuevo.' }
   }
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const inviteLink = `${appUrl}/accept-invite/${invitation.token}`
+  let userId: string
+  let createdNew = false
 
-  // Mandar email — si falla por config faltante o error de provider, no
-  // abortamos: la invitación queda creada y el owner ve el link manual.
-  const inviterName = user.user.user_metadata?.full_name ?? user.user.email ?? null
-  const { subject, html, text } = await renderInvitationEmail({
-    to: parsed.data.email,
-    tenantName: tenant.name,
-    inviterName,
-    role: parsed.data.role,
-    acceptUrl: inviteLink,
-  })
-  const emailResult = await sendEmail({
-    to: parsed.data.email,
-    subject,
-    html,
-    text,
-    tag: 'team_invitation',
-  })
+  if (existingId) {
+    userId = existingId
+  } else {
+    // 2a. Crear el usuario con email confirmado y password.
+    const { data: created, error: createErr } = await service.auth.admin.createUser({
+      email: parsed.data.email,
+      password: parsed.data.password,
+      email_confirm: true,
+      user_metadata: parsed.data.full_name ? { full_name: parsed.data.full_name } : {},
+    })
+    if (createErr || !created.user) {
+      const msg = createErr?.message ?? ''
+      if (/already.*registered|exists/i.test(msg)) {
+        // Carrera: alguien lo creó entre el find y el createUser.
+        const { data: refoundId } = await service.rpc('find_user_id_by_email', {
+          p_email: parsed.data.email,
+        })
+        if (!refoundId) {
+          return { ok: false, message: 'El email ya estaba en uso.', field: 'email' }
+        }
+        userId = refoundId
+      } else {
+        console.error('[equipo.create] admin.createUser', createErr)
+        return { ok: false, message: 'No pudimos crear la cuenta. Probá de nuevo.' }
+      }
+    } else {
+      userId = created.user.id
+      createdNew = true
+    }
+  }
 
-  if (!emailResult.ok) {
-    console.warn('[invite] email no enviado:', emailResult.reason, emailResult.error)
+  // 3. Insertar membership (idempotente: si ya existe se actualiza el rol).
+  const { error: memErr } = await service
+    .from('memberships')
+    .upsert(
+      { tenant_id: tenant.id, user_id: userId, role: parsed.data.role },
+      { onConflict: 'tenant_id,user_id' },
+    )
+  if (memErr) {
+    console.error('[equipo.create] memberships upsert', memErr)
+    return { ok: false, message: 'No pudimos asignar el rol al miembro.' }
   }
 
   await logAudit({
     tenantId: tenant.id,
-    userId: user.user.id,
-    action: 'invitation.created',
-    entity: 'invitation',
+    userId: me.id,
+    action: createdNew ? 'membership.created_with_password' : 'membership.granted_existing_user',
+    entity: 'membership',
     payload: {
+      target_user_id: userId,
       email: parsed.data.email,
       role: parsed.data.role,
-      email_sent: emailResult.ok,
-      email_error: emailResult.ok ? null : emailResult.reason,
     },
   })
 
   revalidatePath(`/${slug}/configuracion/equipo`)
   return {
     ok: true,
-    message: emailResult.ok
-      ? `Invitación enviada por email a ${parsed.data.email}.`
-      : 'Invitación generada — copiá el link manualmente (el email no se pudo enviar).',
-    inviteLink,
-    emailSent: emailResult.ok,
-    emailError: emailResult.ok ? undefined : emailResult.reason,
+    created: createdNew ? 'new' : 'existing',
+    email: parsed.data.email,
+    role: parsed.data.role,
   }
 }
 
-export async function cancelInvitation(slug: string, invitationId: string): Promise<ActionState> {
-  const tenant = await authorizeOwner(slug)
-  if (!tenant) return { ok: false, message: 'No tenés permiso.' }
-
-  const parsed = idSchema.safeParse({ id: invitationId })
-  if (!parsed.success) return { ok: false, message: 'Inválido.' }
-
-  const supabase = await createClient()
-  const { error } = await supabase
-    .from('invitations')
-    .delete()
-    .eq('id', parsed.data.id)
-    .eq('tenant_id', tenant.id)
-
-  if (error) return { ok: false, message: 'No pudimos cancelar.' }
-
-  await logAudit({
-    tenantId: tenant.id,
-    userId: (await supabase.auth.getUser()).data.user?.id ?? null,
-    action: 'invitation.cancelled',
-    entity: 'invitation',
-    entityId: parsed.data.id,
-  })
-
-  revalidatePath(`/${slug}/configuracion/equipo`)
-  return { ok: true }
-}
-
+// ──────────────────────────────────────────────────────────
+// Actualizar rol de un miembro (sin permitir dejar al bar sin owners)
+// ──────────────────────────────────────────────────────────
 export async function updateMemberRole(
   slug: string,
   membershipId: string,
@@ -187,7 +180,6 @@ export async function updateMemberRole(
   const supabase = await createClient()
   const { data: me } = await supabase.auth.getUser()
 
-  // No permitir auto-degradar el último owner
   if (parsed.data.role !== 'owner') {
     const { data: target } = await supabase
       .from('memberships')
@@ -228,6 +220,9 @@ export async function updateMemberRole(
   return { ok: true }
 }
 
+// ──────────────────────────────────────────────────────────
+// Remover miembro del bar (solo borra membership, no borra la cuenta auth)
+// ──────────────────────────────────────────────────────────
 export async function removeMember(slug: string, membershipId: string): Promise<ActionState> {
   const tenant = await authorizeOwner(slug)
   if (!tenant) return { ok: false, message: 'No tenés permiso.' }
@@ -278,4 +273,54 @@ export async function removeMember(slug: string, membershipId: string): Promise<
 
   revalidatePath(`/${slug}/configuracion/equipo`)
   return { ok: true }
+}
+
+// ──────────────────────────────────────────────────────────
+// Resetear contraseña de un miembro (genera link efímero)
+//   El owner lo copia y se lo pasa al miembro por WhatsApp / SMS.
+// ──────────────────────────────────────────────────────────
+export async function setMemberPassword(
+  slug: string,
+  membershipId: string,
+  newPassword: string,
+): Promise<ActionState> {
+  const tenant = await authorizeOwner(slug)
+  if (!tenant) return { ok: false, message: 'No tenés permiso.' }
+
+  const parsedId = idSchema.safeParse({ id: membershipId })
+  if (!parsedId.success) return { ok: false, message: 'Inválido.' }
+  const parsedPwd = passwordSchema.safeParse(newPassword)
+  if (!parsedPwd.success) {
+    return { ok: false, message: parsedPwd.error.issues[0]?.message ?? 'Contraseña inválida' }
+  }
+
+  const supabase = await createClient()
+  const { data: target } = await supabase
+    .from('memberships')
+    .select('user_id')
+    .eq('id', parsedId.data.id)
+    .eq('tenant_id', tenant.id)
+    .maybeSingle()
+  if (!target) return { ok: false, message: 'No existe.' }
+
+  const service = createServiceClient()
+  const { error } = await service.auth.admin.updateUserById(target.user_id, {
+    password: parsedPwd.data,
+  })
+  if (error) {
+    console.error('[equipo.setPassword]', error)
+    return { ok: false, message: 'No pudimos actualizar la contraseña.' }
+  }
+
+  const { data: me } = await supabase.auth.getUser()
+  await logAudit({
+    tenantId: tenant.id,
+    userId: me.user?.id ?? null,
+    action: 'membership.password_reset',
+    entity: 'membership',
+    entityId: parsedId.data.id,
+  })
+
+  revalidatePath(`/${slug}/configuracion/equipo`)
+  return { ok: true, message: 'Contraseña actualizada.' }
 }

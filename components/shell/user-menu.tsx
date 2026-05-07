@@ -1,6 +1,7 @@
 'use client'
 
-import { LogOut, User2 } from 'lucide-react'
+import { KeyRound, LogOut } from 'lucide-react'
+import Link from 'next/link'
 import { useTransition } from 'react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Button } from '@/components/ui/button'
@@ -44,9 +45,11 @@ export function UserMenu({ email, role }: { email: string; role: string }) {
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
-        <DropdownMenuItem disabled className="gap-2">
-          <User2 className="size-4" />
-          Mi cuenta
+        <DropdownMenuItem asChild className="gap-2">
+          <Link href="/auth/update-password">
+            <KeyRound className="size-4" />
+            Cambiar contraseña
+          </Link>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem

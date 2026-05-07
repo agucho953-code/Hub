@@ -1,10 +1,28 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+const SAFE_NEXT = (value: string | null): string => {
+  if (!value) return '/'
+  // Solo aceptamos rutas internas — evitamos open-redirect.
+  if (!value.startsWith('/') || value.startsWith('//')) return '/'
+  return value
+}
+
 export async function GET(request: Request) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
-  const next = searchParams.get('next') ?? '/'
+  const type = searchParams.get('type')
+  const errorDescription = searchParams.get('error_description')
+
+  // Caso recovery: forzamos a la pantalla de cambio de contraseña.
+  const next = type === 'recovery' ? '/auth/update-password' : SAFE_NEXT(searchParams.get('next'))
+
+  if (errorDescription) {
+    console.warn('[auth.callback]', errorDescription)
+    const loginUrl = new URL('/login', origin)
+    loginUrl.searchParams.set('error', 'callback')
+    return NextResponse.redirect(loginUrl)
+  }
 
   if (code) {
     const supabase = await createClient()

@@ -27,9 +27,12 @@ export async function getMembershipsForUser(): Promise<MembershipWithTenant[]> {
   } = await supabase.auth.getUser()
   if (!user) return []
 
+  // Filtramos por user_id: la RLS muestra memberships de otros del mismo bar,
+  // sin este filtro listaríamos miembros ajenos como si fueran del usuario.
   const { data, error } = await supabase
     .from('memberships')
     .select('role, tenant:tenants(id, name, slug, logo_url)')
+    .eq('user_id', user.id)
     .order('created_at', { ascending: true })
 
   if (error) {
@@ -59,9 +62,12 @@ export async function getActiveTenant(): Promise<{
   const claim = session.user?.app_metadata?.active_tenant_id as string | undefined
   if (!claim) return null
 
+  // user_id explícito: hay un row por user en (tenant_id, user_id) único, pero
+  // la RLS expone también miembros del mismo tenant — filtramos para single.
   const { data, error } = await supabase
     .from('memberships')
     .select('role, tenant:tenants(*)')
+    .eq('user_id', session.user.id)
     .eq('tenant_id', claim)
     .maybeSingle()
 

@@ -1,6 +1,5 @@
-import { Mail, UsersRound } from 'lucide-react'
+import { ShieldCheck, UsersRound } from 'lucide-react'
 import { notFound } from 'next/navigation'
-import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
 import { createClient } from '@/lib/supabase/server'
 import {
@@ -10,24 +9,17 @@ import {
   TenantNotFoundError,
 } from '@/lib/tenant'
 import type { TenantRole } from '@/lib/tenant/types'
-import { InvitationRow } from './_invitation-row'
-import { InviteForm } from './_invite-form'
-import { MemberRow } from './_member-row'
+import { CreateMemberForm } from './_create-member-form'
+import { type Member, MemberRow } from './_member-row'
 
 export const metadata = { title: 'Equipo' }
 
-type MembershipRow = {
+type RpcMember = {
   id: string
-  role: TenantRole
   user_id: string
-  created_at: string
-}
-
-type InvitationRowData = {
-  id: string
   email: string
+  full_name: string | null
   role: TenantRole
-  expires_at: string
   created_at: string
 }
 
@@ -45,34 +37,47 @@ export default async function EquipoPage({ params }: { params: Promise<{ tenantS
   }
 
   const supabase = await createClient()
-  const { data: members } = await supabase
-    .from('memberships')
-    .select('id, role, user_id, created_at')
-    .eq('tenant_id', access.tenant.id)
-    .order('created_at', { ascending: true })
+  const {
+    data: { user },
+  } = await supabase.auth.getUser()
 
-  const { data: invitations } = await supabase
-    .from('invitations')
-    .select('id, email, role, expires_at, created_at')
-    .eq('tenant_id', access.tenant.id)
-    .is('accepted_at', null)
-    .order('created_at', { ascending: false })
+  const { data: rows, error } = await supabase.rpc('get_tenant_members', {
+    p_tenant: access.tenant.id,
+  })
+  if (error) {
+    console.error('[equipo] get_tenant_members', error)
+  }
+
+  const members: Member[] = (rows ?? []).map((r: RpcMember) => ({
+    id: r.id,
+    user_id: r.user_id,
+    email: r.email,
+    full_name: r.full_name,
+    role: r.role,
+    created_at: r.created_at,
+  }))
 
   return (
     <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
         eyebrow="Configuración"
         title="Equipo"
-        description="Invitá a tu staff y asigná roles. Los cajeros y mozos ven solo lo operativo."
+        description="Sumá a tu staff con email y contraseña. Cada rol ve solo lo que necesita."
       />
 
-      <div className="card-hairline rounded-xl border bg-card p-5">
-        <h2 className="font-display text-sm font-semibold tracking-tight">Invitar miembro</h2>
-        <p className="text-xs text-muted-foreground">
-          Vamos a generarte un link único para enviárselo. El link expira en 7 días.
-        </p>
-        <div className="mt-4">
-          <InviteForm tenantSlug={tenantSlug} />
+      <div className="card-hairline relative overflow-hidden rounded-xl border bg-card">
+        <div className="border-b border-border/60 px-5 py-3.5">
+          <div className="flex items-center gap-2">
+            <ShieldCheck className="size-4 text-primary" />
+            <h2 className="font-display text-sm font-semibold tracking-tight">Sumar miembro</h2>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Crear cuenta con email + contraseña. Si el email ya existe en HUB, le damos acceso al
+            bar sin tocarle la contraseña actual.
+          </p>
+        </div>
+        <div className="p-5">
+          <CreateMemberForm tenantSlug={tenantSlug} />
         </div>
       </div>
 
@@ -80,37 +85,22 @@ export default async function EquipoPage({ params }: { params: Promise<{ tenantS
         <header className="flex items-center justify-between gap-2">
           <h2 className="flex items-center gap-2 font-display text-sm font-semibold tracking-tight">
             <UsersRound className="size-4 text-muted-foreground" />
-            Miembros <span className="text-muted-foreground">({members?.length ?? 0})</span>
+            Miembros{' '}
+            <span className="rounded-md bg-muted px-1.5 py-0.5 text-[11px] font-medium text-muted-foreground">
+              {members.length}
+            </span>
           </h2>
         </header>
         <div className="card-hairline divide-y divide-border/60 overflow-hidden rounded-xl border bg-card">
-          {(members ?? []).map((m: MembershipRow) => (
-            <MemberRow key={m.id} member={m} tenantSlug={tenantSlug} />
+          {members.map((m) => (
+            <MemberRow
+              key={m.id}
+              member={m}
+              tenantSlug={tenantSlug}
+              isCurrentUser={user?.id === m.user_id}
+            />
           ))}
         </div>
-      </section>
-
-      <section className="space-y-3">
-        <header className="flex items-center justify-between gap-2">
-          <h2 className="flex items-center gap-2 font-display text-sm font-semibold tracking-tight">
-            <Mail className="size-4 text-muted-foreground" />
-            Invitaciones pendientes{' '}
-            <span className="text-muted-foreground">({invitations?.length ?? 0})</span>
-          </h2>
-        </header>
-        {(invitations ?? []).length === 0 ? (
-          <EmptyState
-            icon={Mail}
-            title="Sin invitaciones pendientes"
-            description="Cuando invites a alguien, va a aparecer acá hasta que acepte."
-          />
-        ) : (
-          <div className="card-hairline divide-y divide-border/60 overflow-hidden rounded-xl border bg-card">
-            {(invitations ?? []).map((inv: InvitationRowData) => (
-              <InvitationRow key={inv.id} invitation={inv} tenantSlug={tenantSlug} />
-            ))}
-          </div>
-        )}
       </section>
     </div>
   )

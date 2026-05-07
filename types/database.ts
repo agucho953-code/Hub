@@ -2765,6 +2765,7 @@ export type Database = {
           no_show_reservations: number
         }[]
       }
+      find_user_id_by_email: { Args: { p_email: string }; Returns: string }
       generate_qr_token: { Args: never; Returns: string }
       get_invitation_preview: {
         Args: { p_token: string }
@@ -2791,6 +2792,17 @@ export type Database = {
       get_session_state: {
         Args: { p_browser_token: string; p_qr_token: string }
         Returns: Json
+      }
+      get_tenant_members: {
+        Args: { p_tenant: string }
+        Returns: {
+          created_at: string
+          email: string
+          full_name: string | null
+          id: string
+          role: Database["public"]["Enums"]["tenant_role"]
+          user_id: string
+        }[]
       }
       ingest_inbound_message: {
         Args: {
