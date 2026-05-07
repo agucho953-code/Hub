@@ -34,10 +34,16 @@ export function InviteForm({ tenantSlug }: { tenantSlug: string }) {
 
   useEffect(() => {
     if (state.ok && state.inviteLink) {
-      navigator.clipboard?.writeText(state.inviteLink).catch(() => {})
-      toast.success('Link copiado al portapapeles.', {
-        description: state.inviteLink,
-      })
+      if (state.emailSent) {
+        toast.success(state.message ?? 'Email enviado.', {
+          description: 'Si no llega, copiá el link manual desde la lista.',
+        })
+      } else {
+        navigator.clipboard?.writeText(state.inviteLink).catch(() => {})
+        toast.warning('Email no se pudo enviar — link copiado al portapapeles.', {
+          description: state.inviteLink,
+        })
+      }
     } else if (!state.ok && state.message) {
       toast.error(state.message)
     }

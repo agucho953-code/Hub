@@ -3,6 +3,8 @@
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
+import { sendEmail } from '@/lib/email/send'
+import { renderInvitationEmail } from '@/lib/email/templates/invitation'
 import { createClient } from '@/lib/supabase/server'
 import {
   RoleRequiredError,
@@ -24,7 +26,13 @@ const updateRoleSchema = idSchema.extend({
 })
 
 export type ActionState =
-  | { ok: true; message?: string; inviteLink?: string }
+  | {
+      ok: true
+      message?: string
+      inviteLink?: string
+      emailSent?: boolean
+      emailError?: string
+    }
   | { ok: false; message: string }
 
 async function authorizeOwner(slug: string) {
@@ -87,22 +95,54 @@ export async function inviteMember(
     return { ok: false, message: 'No pudimos crear la invitación.' }
   }
 
+  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+  const inviteLink = `${appUrl}/accept-invite/${invitation.token}`
+
+  // Mandar email — si falla por config faltante o error de provider, no
+  // abortamos: la invitación queda creada y el owner ve el link manual.
+  const inviterName = user.user.user_metadata?.full_name ?? user.user.email ?? null
+  const { subject, html, text } = renderInvitationEmail({
+    to: parsed.data.email,
+    tenantName: tenant.name,
+    inviterName,
+    role: parsed.data.role,
+    acceptUrl: inviteLink,
+  })
+  const emailResult = await sendEmail({
+    to: parsed.data.email,
+    subject,
+    html,
+    text,
+    tag: 'team_invitation',
+  })
+
+  if (!emailResult.ok) {
+    console.warn('[invite] email no enviado:', emailResult.reason, emailResult.error)
+  }
+
   await logAudit({
     tenantId: tenant.id,
     userId: user.user.id,
     action: 'invitation.created',
     entity: 'invitation',
-    payload: { email: parsed.data.email, role: parsed.data.role },
+    payload: {
+      email: parsed.data.email,
+      role: parsed.data.role,
+      email_sent: emailResult.ok,
+      email_error: emailResult.ok ? null : emailResult.reason,
+    },
   })
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
-  const inviteLink = `${appUrl}/accept-invite/${invitation.token}`
-
-  // F1: email mockeado — devolvemos el link para copy/paste manual.
-  console.info('[invite] link generado:', inviteLink)
-
   revalidatePath(`/${slug}/configuracion/equipo`)
-  return { ok: true, message: 'Invitación generada.', inviteLink }
+  return {
+    ok: true,
+    message: emailResult.ok
+      ? `Invitación enviada por email a ${parsed.data.email}.`
+      : 'Invitación generada — copiá el link manualmente (el email no se pudo enviar).',
+    inviteLink,
+    emailSent: emailResult.ok,
+    emailError: emailResult.ok ? undefined : emailResult.reason,
+  }
 }
 
 export async function cancelInvitation(slug: string, invitationId: string): Promise<ActionState> {
