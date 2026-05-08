@@ -1,26 +1,18 @@
 import {
   BarChart3,
   CalendarDays,
-  ChefHat,
   ClipboardList,
   Inbox,
   LayoutDashboard,
-  LayoutGrid,
   type LucideIcon,
   Megaphone,
-  MessageSquareText,
-  QrCode,
-  Receipt,
   Settings2,
-  Sparkles,
   Stamp,
   Star,
-  Tags,
   Users,
   UsersRound,
   UtensilsCrossed,
   Workflow,
-  Zap,
 } from 'lucide-react'
 import type { TenantRole } from '@/lib/tenant/types'
 
@@ -32,8 +24,8 @@ export type NavItem = {
   roles?: TenantRole[]
   /** Match exacto (true) o prefijo (false, default). */
   exact?: boolean
-  /** Para el atajo destacado tipo CTA. */
-  emphasis?: boolean
+  /** Abre en nueva pestaña. Para "Salón en vivo" desde el manager. */
+  newTab?: boolean
 }
 
 export type NavGroup = {
@@ -41,9 +33,19 @@ export type NavGroup = {
   items: NavItem[]
 }
 
+/**
+ * Information architecture del Manager Workspace — 6 dominios.
+ * Cada dominio agrupa por job-to-be-done del owner:
+ *   HOY       — qué está pasando ahora
+ *   CLIENTES  — quién viene
+ *   MARKETING — cómo los traigo de vuelta
+ *   CATÁLOGO  — qué vendo y cómo se premia
+ *   INSIGHTS  — qué entiendo
+ *   AJUSTES   — cómo lo configuro
+ */
 export const NAV_GROUPS: NavGroup[] = [
   {
-    label: 'Operación',
+    label: 'Hoy',
     items: [
       {
         label: 'Resumen',
@@ -52,33 +54,11 @@ export const NAV_GROUPS: NavGroup[] = [
         exact: true,
       },
       {
-        label: 'Sesiones',
+        label: 'Salón en vivo',
         href: (s) => `/${s}/sesiones`,
         icon: ClipboardList,
-        emphasis: true,
-        roles: ['owner', 'cashier', 'waiter'],
-      },
-      {
-        label: 'Cocina',
-        href: (s) => `/${s}/cocina`,
-        icon: ChefHat,
-        roles: ['owner', 'kitchen'],
-      },
-      {
-        label: 'Cerrar mesa (legacy)',
-        href: (s) => `/${s}/visitas/nueva`,
-        icon: Receipt,
-        roles: ['owner', 'cashier'],
-      },
-      {
-        label: 'Clientes',
-        href: (s) => `/${s}/clientes`,
-        icon: Users,
-      },
-      {
-        label: 'Eventos',
-        href: (s) => `/${s}/eventos`,
-        icon: CalendarDays,
+        newTab: true,
+        roles: ['owner'],
       },
       {
         label: 'Bandeja',
@@ -88,12 +68,17 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
-    label: 'Análisis',
+    label: 'Clientes',
     items: [
       {
-        label: 'Estadísticas',
-        href: (s) => `/${s}/estadisticas`,
-        icon: BarChart3,
+        label: 'Personas',
+        href: (s) => `/${s}/clientes`,
+        icon: Users,
+      },
+      {
+        label: 'Audiencias',
+        href: (s) => `/${s}/audiencias`,
+        icon: UsersRound,
         roles: ['owner'],
       },
     ],
@@ -101,12 +86,6 @@ export const NAV_GROUPS: NavGroup[] = [
   {
     label: 'Marketing',
     items: [
-      {
-        label: 'Audiencias',
-        href: (s) => `/${s}/audiencias`,
-        icon: UsersRound,
-        roles: ['owner'],
-      },
       {
         label: 'Difusiones',
         href: (s) => `/${s}/difusiones`,
@@ -119,21 +98,20 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Workflow,
         roles: ['owner'],
       },
+      {
+        label: 'Eventos',
+        href: (s) => `/${s}/eventos`,
+        icon: CalendarDays,
+      },
     ],
   },
   {
-    label: 'Configuración',
+    label: 'Catálogo',
     items: [
       {
         label: 'Menú',
         href: (s) => `/${s}/menu`,
         icon: UtensilsCrossed,
-        roles: ['owner'],
-      },
-      {
-        label: 'Mesas',
-        href: (s) => `/${s}/configuracion/mesas`,
-        icon: LayoutGrid,
         roles: ['owner'],
       },
       {
@@ -148,48 +126,27 @@ export const NAV_GROUPS: NavGroup[] = [
         icon: Stamp,
         roles: ['owner'],
       },
+    ],
+  },
+  {
+    label: 'Insights',
+    items: [
       {
-        label: 'Tags de carta',
-        href: (s) => `/${s}/configuracion/tags`,
-        icon: Tags,
+        label: 'Estadísticas',
+        href: (s) => `/${s}/estadisticas`,
+        icon: BarChart3,
         roles: ['owner'],
       },
+    ],
+  },
+  {
+    label: 'Ajustes',
+    items: [
       {
-        label: 'Auto-aceptación',
-        href: (s) => `/${s}/configuracion/auto-aceptacion`,
-        icon: Zap,
-        roles: ['owner'],
-      },
-      {
-        label: 'Captura legacy',
-        href: (s) => `/${s}/configuracion/captura`,
-        icon: QrCode,
-        roles: ['owner'],
-      },
-      {
-        label: 'Canales',
-        href: (s) => `/${s}/configuracion/canales`,
-        icon: Sparkles,
-        roles: ['owner'],
-      },
-      {
-        label: 'Plantillas',
-        href: (s) => `/${s}/configuracion/templates`,
-        icon: MessageSquareText,
-        roles: ['owner'],
-      },
-      {
-        label: 'Equipo',
-        href: (s) => `/${s}/configuracion/equipo`,
-        icon: UsersRound,
-        roles: ['owner'],
-      },
-      {
-        label: 'Preferencias',
+        label: 'Configuración',
         href: (s) => `/${s}/configuracion`,
         icon: Settings2,
         roles: ['owner'],
-        exact: true,
       },
     ],
   },

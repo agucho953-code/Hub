@@ -1,44 +1,31 @@
-'use client'
-
 import Link from 'next/link'
-import { Badge } from '@/components/ui/badge'
-import type { MembershipWithTenant, Tenant, TenantRole } from '@/lib/tenant/types'
+import type { Tenant, TenantRole } from '@/lib/tenant/types'
 import { BrandMark, BrandWordmark } from './brand-mark'
 import { visibleGroups } from './nav-config'
 import { SidebarNav } from './sidebar-nav'
-import { TenantSwitcher } from './tenant-switcher'
 
 export function SidebarContent({
   tenant,
   role,
-  memberships,
   onNavigate,
 }: {
   tenant: Pick<Tenant, 'id' | 'name' | 'slug' | 'logo_url'>
   role: TenantRole
-  memberships: MembershipWithTenant[]
   onNavigate?: () => void
 }) {
   const groups = visibleGroups(role)
 
   return (
     <>
-      <div className="flex items-center gap-2.5 px-4 pt-4 pb-3">
+      <div className="flex items-center gap-2.5 px-4 pt-5 pb-4">
         <Link
           href={`/${tenant.slug}`}
           onClick={onNavigate}
-          className="flex items-center gap-2.5 outline-none"
+          className="flex items-center gap-2.5 rounded-md outline-none transition-opacity hover:opacity-80"
         >
-          <BrandMark />
-          <BrandWordmark />
+          <BrandMark size={32} />
+          <BrandWordmark className="text-base" />
         </Link>
-        <Badge variant="outline" className="ml-auto text-[10px] uppercase tracking-wider">
-          {role}
-        </Badge>
-      </div>
-
-      <div className="px-3 pb-3">
-        <TenantSwitcher current={tenant} memberships={memberships} />
       </div>
 
       <div className="mx-3 h-px bg-border/60" />
@@ -48,9 +35,12 @@ export function SidebarContent({
       </div>
 
       <div className="border-t border-border/60 px-4 py-3">
-        <p className="text-[11px] text-muted-foreground/80">{tenant.name}</p>
+        <p className="text-[11px] font-medium text-muted-foreground/90">{tenant.name}</p>
         <p className="mt-0.5 truncate font-mono text-[11px] text-muted-foreground/60">
           /{tenant.slug}
+        </p>
+        <p className="mt-2 text-[10px] uppercase tracking-[0.18em] text-muted-foreground/60">
+          {role}
         </p>
       </div>
     </>
