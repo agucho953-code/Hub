@@ -16,61 +16,54 @@ function formatRelative(iso: string | null): string {
   return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit' })
 }
 
-export function ConversationList({
+/**
+ * Lista vertical mobile-first de conversaciones — touch-friendly (rows altos),
+ * tap navega al detalle como ruta separada (no split pane).
+ */
+export function ConversationListMobile({
   conversations,
   tenantSlug,
-  selectedId,
 }: {
   conversations: ConversationListRow[]
   tenantSlug: string
-  selectedId: string | null
 }) {
-  if (conversations.length === 0) {
-    return (
-      <div className="flex flex-1 items-center justify-center px-4 py-10 text-center text-xs text-muted-foreground">
-        Sin conversaciones todavía.
-      </div>
-    )
-  }
   return (
-    <ul className="divide-y divide-border/40 overflow-y-auto">
+    <ul className="card-hairline divide-y divide-border/50 overflow-hidden rounded-xl border border-border/70 bg-card">
       {conversations.map((c) => {
-        const active = c.id === selectedId
         const display = c.customer_name ?? c.external_user_id
         const initials = (display || '?').charAt(0).toUpperCase()
         const channelKey = c.channel_type === 'whatsapp' ? 'WA' : 'IG'
+        const unread = c.unread_count > 0
         return (
           <li key={c.id}>
             <Link
-              href={`/${tenantSlug}/bandeja?c=${c.id}`}
-              className={cn(
-                'flex items-start gap-3 px-3 py-3 transition-colors',
-                active ? 'bg-primary/10' : 'hover:bg-secondary/40',
-              )}
+              href={`/${tenantSlug}/salon/bandeja/${c.id}`}
+              className="flex items-start gap-3 px-4 py-3.5 transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-[--cream-tint] active:bg-[--cream-tint]"
             >
               <div className="relative shrink-0">
-                <Avatar className="size-9">
-                  <AvatarFallback className="bg-secondary text-xs font-semibold">
+                <Avatar className="size-11">
+                  <AvatarFallback className="bg-secondary text-sm font-semibold">
                     {initials}
                   </AvatarFallback>
                 </Avatar>
                 <span
                   className={cn(
-                    'absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-card px-0.5 text-[8px] font-bold leading-none',
+                    'absolute -bottom-0.5 -right-0.5 flex h-4 min-w-4 items-center justify-center rounded-full border border-card px-1 text-[9px] font-bold leading-none',
                     c.channel_type === 'whatsapp'
                       ? 'bg-success text-success-foreground'
                       : 'bg-warning text-warning-foreground',
                   )}
+                  aria-hidden
                 >
                   {channelKey}
                 </span>
               </div>
-              <div className="min-w-0 flex-1 space-y-0.5">
+              <div className="min-w-0 flex-1 space-y-1">
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className={cn(
-                      'truncate text-sm',
-                      c.unread_count > 0 ? 'font-semibold text-foreground' : 'font-medium',
+                      'truncate',
+                      unread ? 'font-semibold text-foreground' : 'font-medium text-foreground/90',
                     )}
                   >
                     {display}
@@ -82,15 +75,13 @@ export function ConversationList({
                 <div className="flex items-center justify-between gap-2">
                   <span
                     className={cn(
-                      'truncate text-xs',
-                      c.unread_count > 0
-                        ? 'text-foreground/80 font-medium'
-                        : 'text-muted-foreground',
+                      'truncate text-sm',
+                      unread ? 'font-medium text-foreground/85' : 'text-muted-foreground',
                     )}
                   >
                     {c.preview ?? '—'}
                   </span>
-                  {c.unread_count > 0 ? (
+                  {unread ? (
                     <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-primary text-[10px] font-bold tabular-nums text-primary-foreground">
                       {c.unread_count}
                     </span>

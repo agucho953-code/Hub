@@ -1,7 +1,7 @@
 import { Clock, MessageSquare } from 'lucide-react'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import { Badge } from '@/components/ui/badge'
-import { getConversation, listMessages } from '../queries'
+import { getConversation, listMessages } from '@/lib/bandeja/queries'
 import { Composer } from './composer'
 import { MessageThread } from './message-thread'
 

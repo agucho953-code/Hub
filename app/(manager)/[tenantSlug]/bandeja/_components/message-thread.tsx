@@ -2,9 +2,9 @@
 
 import { Check, CheckCheck, Clock3, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
+import type { MessageRow } from '@/lib/bandeja/queries'
 import { createClient } from '@/lib/supabase/browser'
 import { cn } from '@/lib/utils'
-import type { MessageRow } from '../queries'
 
 function StatusIcon({ status }: { status: MessageRow['status'] }) {
   if (!status) return null

@@ -2,6 +2,7 @@ import { Inbox, MessageSquareDashed } from 'lucide-react'
 import { notFound } from 'next/navigation'
 import { EmptyState } from '@/components/ui/empty-state'
 import { PageHeader } from '@/components/ui/page-header'
+import { listApprovedTemplates, listConversations } from '@/lib/bandeja/queries'
 import {
   RoleRequiredError,
   requireRole,
@@ -10,7 +11,6 @@ import {
 } from '@/lib/tenant'
 import { ConversationList } from './_components/conversation-list'
 import { ConversationView } from './_components/conversation-view'
-import { listApprovedTemplates, listConversations } from './queries'
 
 export const metadata = { title: 'Bandeja' }
 export const dynamic = 'force-dynamic'
