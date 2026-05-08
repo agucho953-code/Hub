@@ -33,7 +33,7 @@ export default async function MenuPage({ params }: { params: Promise<{ tenantSlu
   return (
     <div className="mx-auto w-full max-w-5xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Configuración"
+        eyebrow="Catálogo"
         title="Menú"
         description={`${categories.length} categoría${categories.length === 1 ? '' : 's'} · ${totalItems} ítem${totalItems === 1 ? '' : 's'}. Arrastrá para reordenar.`}
       />

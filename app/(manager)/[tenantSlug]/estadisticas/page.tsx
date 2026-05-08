@@ -77,7 +77,7 @@ export default async function EstadisticasPage({
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Análisis"
+        eyebrow="Insights"
         title="Estadísticas"
         description="Vista profunda de tu bar: clientes, visitas, eventos y comunicaciones."
       />

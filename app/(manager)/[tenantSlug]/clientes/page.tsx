@@ -51,7 +51,7 @@ export default async function ClientesPage({
   return (
     <div className="mx-auto w-full max-w-7xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Operación"
+        eyebrow="Personas"
         title="Clientes"
         description={`${total.toLocaleString('es-AR')} ${total === 1 ? 'cliente registrado' : 'clientes registrados'} · página ${filters.page} de ${totalPages}`}
         actions={

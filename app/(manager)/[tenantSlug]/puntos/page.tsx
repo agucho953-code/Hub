@@ -39,7 +39,7 @@ export default async function PuntosPage({ params }: { params: Promise<{ tenantS
   return (
     <div className="mx-auto w-full max-w-6xl space-y-6 px-4 py-8 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Configuración"
+        eyebrow="Catálogo"
         title="Puntos y recompensas"
         description="Definí cómo se ganan los puntos y qué pueden canjear los clientes."
       />

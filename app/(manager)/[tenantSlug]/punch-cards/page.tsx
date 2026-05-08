@@ -38,7 +38,11 @@ export default async function PunchCardsPage({
 
   return (
     <main className="space-y-6 py-6">
-      <PageHeader title="Punch cards" description="Tarjetas perforadas: 'N consumos = 1 reward'." />
+      <PageHeader
+        eyebrow="Catálogo"
+        title="Punch cards"
+        description="Tarjetas perforadas: cada N consumos, un reward."
+      />
       <Section>
         <PunchCardsManager
           tenantSlug={tenantSlug}

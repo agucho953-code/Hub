@@ -41,7 +41,7 @@ export default async function BandejaPage({
   return (
     <div className="mx-auto flex h-[calc(100vh-3.5rem)] w-full max-w-7xl flex-col gap-4 px-4 py-6 sm:px-6 lg:px-8">
       <PageHeader
-        eyebrow="Operación"
+        eyebrow="Hoy"
         title="Bandeja"
         description="Mensajes 1-a-1 con tus clientes en WhatsApp e Instagram, en un solo lugar."
         className="pb-0"

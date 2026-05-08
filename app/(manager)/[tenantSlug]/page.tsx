@@ -132,7 +132,8 @@ export default async function TenantHomePage({
         <StatCard
           icon={Users}
           label="Clientes"
-          value={numberFmt.format(kpis.customers_total)}
+          numberValue={kpis.customers_total}
+          numberFormat={(n) => numberFmt.format(Math.round(n))}
           hint={newLast > 0 ? `+${numberFmt.format(newLast)} nuevos en 30d` : 'Sin altas en 30d'}
           delta={newCustomersDelta.label}
           deltaTone={newCustomersDelta.tone}
@@ -140,7 +141,8 @@ export default async function TenantHomePage({
         <StatCard
           icon={Sparkles}
           label="Activos 30d"
-          value={numberFmt.format(kpis.customers_active_30d)}
+          numberValue={kpis.customers_active_30d}
+          numberFormat={(n) => numberFmt.format(Math.round(n))}
           hint={
             kpis.customers_total > 0
               ? `${Math.round((kpis.customers_active_30d / kpis.customers_total) * 100)}% del total`
@@ -158,7 +160,8 @@ export default async function TenantHomePage({
         <StatCard
           icon={Receipt}
           label="Visitas 30d"
-          value={numberFmt.format(kpis.visits_30d)}
+          numberValue={kpis.visits_30d}
+          numberFormat={(n) => numberFmt.format(Math.round(n))}
           hint={
             visitsLast > 0 ? `Promedio ${(visitsLast / 30).toFixed(1)}/día` : 'Sin visitas todavía'
           }
@@ -171,7 +174,8 @@ export default async function TenantHomePage({
         <StatCard
           icon={Banknote}
           label="Revenue 30d"
-          value={fmtCents(kpis.revenue_30d_cents)}
+          numberValue={kpis.revenue_30d_cents}
+          numberFormat={(n) => fmtCents(Math.round(n))}
           hint={
             kpis.visits_30d > 0
               ? `Ticket promedio ${fmtCents(kpis.avg_ticket_30d_cents)}`
