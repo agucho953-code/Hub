@@ -4,6 +4,8 @@ import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 import { logAudit } from '@/lib/audit'
 import { emailSchema, passwordSchema } from '@/lib/auth/schemas'
+import { sendEmail } from '@/lib/email/send'
+import { renderCredentialsEmail } from '@/lib/email/templates/credentials'
 import { createClient } from '@/lib/supabase/server'
 import { createServiceClient } from '@/lib/supabase/service'
 import {
@@ -32,7 +34,13 @@ const createMemberSchema = z.object({
 })
 
 export type CreateMemberState =
-  | { ok: true; created: 'new' | 'existing'; email: string; role: TenantRole }
+  | {
+      ok: true
+      created: 'new' | 'existing'
+      email: string
+      role: TenantRole
+      emailSent?: boolean
+    }
   | { ok: false; message: string; field?: 'email' | 'password' | 'role' | 'full_name' }
 
 export type ActionState = { ok: true; message?: string } | { ok: false; message: string }
@@ -142,6 +150,32 @@ export async function createMemberWithPassword(
     return { ok: false, message: 'No pudimos asignar el rol al miembro.' }
   }
 
+  // 4. Mandar credenciales por email solo si la cuenta es nueva. Si ya existía
+  //    no pisamos su contraseña, así que no tiene sentido mandarle credenciales.
+  let emailSent = false
+  if (createdNew) {
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'http://localhost:3000'
+    const { subject, html, text } = await renderCredentialsEmail({
+      tenantName: tenant.name,
+      fullName: parsed.data.full_name ?? null,
+      email: parsed.data.email,
+      password: parsed.data.password,
+      role: parsed.data.role,
+      loginUrl: `${appUrl}/login`,
+    })
+    const emailResult = await sendEmail({
+      to: parsed.data.email,
+      subject,
+      html,
+      text,
+      tag: 'team_credentials',
+    })
+    emailSent = emailResult.ok
+    if (!emailResult.ok) {
+      console.warn('[equipo.create] email no enviado:', emailResult.reason, emailResult.error)
+    }
+  }
+
   await logAudit({
     tenantId: tenant.id,
     userId: me.id,
@@ -151,6 +185,7 @@ export async function createMemberWithPassword(
       target_user_id: userId,
       email: parsed.data.email,
       role: parsed.data.role,
+      email_sent: emailSent,
     },
   })
 
@@ -160,6 +195,7 @@ export async function createMemberWithPassword(
     created: createdNew ? 'new' : 'existing',
     email: parsed.data.email,
     role: parsed.data.role,
+    emailSent,
   }
 }
 

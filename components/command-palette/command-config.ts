@@ -1,5 +1,6 @@
 import {
   BarChart3,
+  BookOpen,
   CalendarDays,
   ChefHat,
   ClipboardList,
@@ -237,6 +238,15 @@ export const commandEntries: CommandEntry[] = [
     type: 'navigate',
     href: (s) => `/${s}/estadisticas`,
     keywords: ['reportes', 'analytics'],
+  },
+  {
+    id: 'docs',
+    label: 'Documentación',
+    icon: BookOpen,
+    group: 'Ir a',
+    type: 'navigate',
+    href: (s) => `/${s}/docs`,
+    keywords: ['ayuda', 'guía', 'manual', 'help'],
   },
   {
     id: 'settings',

@@ -139,6 +139,16 @@ export const NAV_GROUPS: NavGroup[] = [
     ],
   },
   {
+    label: 'Ayuda',
+    items: [
+      {
+        label: 'Documentación',
+        href: (s) => `/${s}/docs`,
+        icon: 'BookOpen',
+      },
+    ],
+  },
+  {
     label: 'Ajustes',
     items: [
       {
