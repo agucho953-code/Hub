@@ -134,15 +134,15 @@ describeIfRls('RLS — loyalty (visits, points, rewards)', () => {
       .single()
 
     await service.from('points_transactions').insert([
-      { tenant_id: tenantA.id, customer_id: cust!.id, delta: 50, reason: 'test' },
-      { tenant_id: tenantA.id, customer_id: cust!.id, delta: 30, reason: 'test' },
-      { tenant_id: tenantA.id, customer_id: cust!.id, delta: -20, reason: 'test' },
+      { tenant_id: tenantA.id, customer_id: cust?.id, delta: 50, reason: 'test' },
+      { tenant_id: tenantA.id, customer_id: cust?.id, delta: 30, reason: 'test' },
+      { tenant_id: tenantA.id, customer_id: cust?.id, delta: -20, reason: 'test' },
     ])
 
     const { data: c } = await service
       .from('customers')
       .select('points_balance')
-      .eq('id', cust!.id)
+      .eq('id', cust?.id)
       .single()
     expect(c?.points_balance).toBe(60)
   })
@@ -259,15 +259,15 @@ describeIfRls('RLS — loyalty (visits, points, rewards)', () => {
       .single()
 
     const { error } = await cashierA.client.rpc('redeem_reward', {
-      p_customer_id: poor!.id,
-      p_reward_id: reward!.id,
+      p_customer_id: poor?.id,
+      p_reward_id: reward?.id,
     })
     expect(error?.message).toContain('insufficient_balance')
 
     const { data: c } = await service
       .from('customers')
       .select('points_balance')
-      .eq('id', poor!.id)
+      .eq('id', poor?.id)
       .single()
     expect(c?.points_balance).toBe(0)
   })
@@ -295,7 +295,7 @@ describeIfRls('RLS — loyalty (visits, points, rewards)', () => {
       .single()
 
     const { data, error } = await cashierA.client.rpc('close_table', {
-      p_customer_id: clean!.id,
+      p_customer_id: clean?.id,
       p_items: [{ item_id: itemA.id, quantity: 1 }],
       p_notes: null,
     })

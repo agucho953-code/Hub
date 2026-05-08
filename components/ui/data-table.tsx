@@ -11,7 +11,7 @@ export function DataTableShell({
   return (
     <div
       className={cn(
-        'card-hairline relative overflow-hidden rounded-xl border bg-card',
+        'card-hairline relative overflow-hidden rounded-xl border border-border/70 bg-card',
         className,
       )}
     >
@@ -20,17 +20,41 @@ export function DataTableShell({
   )
 }
 
-export function DataTableScroll({ children }: { children: ReactNode }) {
-  return <div className="overflow-x-auto">{children}</div>
+export function DataTableScroll({
+  children,
+  maxHeight,
+}: {
+  children: ReactNode
+  maxHeight?: string
+}) {
+  return (
+    <div
+      className="overflow-x-auto overflow-y-auto"
+      style={maxHeight ? { maxHeight } : undefined}
+    >
+      {children}
+    </div>
+  )
 }
 
 export function DataTableRoot({ children }: { children: ReactNode }) {
   return <table className="w-full text-sm">{children}</table>
 }
 
-export function DataTableHead({ children }: { children: ReactNode }) {
+export function DataTableHead({
+  children,
+  sticky = false,
+}: {
+  children: ReactNode
+  sticky?: boolean
+}) {
   return (
-    <thead className="border-b border-border/60 bg-secondary/30 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+    <thead
+      className={cn(
+        'border-b border-border/60 bg-secondary/40 text-left text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground',
+        sticky && 'sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-secondary/70',
+      )}
+    >
       {children}
     </thead>
   )
@@ -67,8 +91,10 @@ export function DataTableRow({
     <tr
       onClick={onClick}
       className={cn(
-        'transition-colors',
-        onClick ? 'cursor-pointer hover:bg-secondary/40' : 'hover:bg-secondary/30',
+        'transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)]',
+        onClick
+          ? 'cursor-pointer hover:bg-[--cream-tint]'
+          : 'hover:bg-[--cream-tint]',
         className,
       )}
     >
@@ -103,7 +129,7 @@ export function DataTableFooter({
   return (
     <div
       className={cn(
-        'flex items-center justify-between gap-3 border-t border-border/60 bg-secondary/20 px-4 py-2.5 text-xs text-muted-foreground',
+        'flex items-center justify-between gap-3 border-t border-border/60 bg-secondary/30 px-4 py-2.5 text-xs text-muted-foreground',
         className,
       )}
     >

@@ -10,7 +10,6 @@ import { SidebarContent } from './sidebar-content'
 export function MobileShell({
   tenant,
   role,
-  memberships,
 }: {
   tenant: Pick<Tenant, 'id' | 'name' | 'slug' | 'logo_url'>
   role: TenantRole
@@ -30,12 +29,7 @@ export function MobileShell({
         className="flex w-[280px] flex-col gap-0 bg-surface p-0 sm:max-w-[280px]"
       >
         <SheetTitle className="sr-only">Navegación</SheetTitle>
-        <SidebarContent
-          tenant={tenant}
-          role={role}
-          memberships={memberships}
-          onNavigate={() => setOpen(false)}
-        />
+        <SidebarContent tenant={tenant} role={role} onNavigate={() => setOpen(false)} />
       </SheetContent>
     </Sheet>
   )

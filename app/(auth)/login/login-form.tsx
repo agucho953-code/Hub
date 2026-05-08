@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { useActionState, useEffect, useId, useRef, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
-import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
+import { BrandWordmarkLarge } from '@/components/shell/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -53,15 +53,14 @@ export function LoginForm({
   const passwordError = state.status === 'error' ? state.fieldErrors?.password : undefined
 
   return (
-    <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-center gap-2.5">
-        <BrandMark className="size-9" />
-        <BrandWordmark className="text-base" />
+    <div className="space-y-7 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+      <div className="flex justify-center">
+        <BrandWordmarkLarge />
       </div>
 
-      <div className="card-hairline relative overflow-hidden rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
-        <div className="space-y-1.5 text-center">
-          <h1 className="font-display text-xl font-semibold tracking-tight">Ingresá a tu bar</h1>
+      <div className="card-hairline relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
+        <div className="space-y-2 text-center">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight">Ingresá a tu bar</h1>
           <p className="text-sm text-muted-foreground text-balance">
             Usá el email y la contraseña que te dio el dueño del bar.
           </p>

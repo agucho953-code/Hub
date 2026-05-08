@@ -34,6 +34,11 @@ export const updatePasswordSchema = z
   .object({
     password: passwordSchema,
     confirm: z.string(),
+    /**
+     * Solo requerido cuando NO venimos de un magic link de recovery
+     * (la action lo valida según la cookie `hub_recovery_flow`).
+     */
+    currentPassword: z.string().optional(),
   })
   .refine((d) => d.password === d.confirm, {
     message: 'Las contraseñas no coinciden',

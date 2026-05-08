@@ -4,7 +4,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Mail } from 'lucide-react'
 import Link from 'next/link'
 import { useActionState, useId } from 'react'
 import { useFormStatus } from 'react-dom'
-import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
+import { BrandWordmarkLarge } from '@/components/shell/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -32,36 +32,35 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
   const error = state.status === 'error' ? state.message : undefined
 
   return (
-    <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-center gap-2.5">
-        <BrandMark className="size-9" />
-        <BrandWordmark className="text-base" />
+    <div className="space-y-7 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+      <div className="flex justify-center">
+        <BrandWordmarkLarge />
       </div>
 
-      <div className="card-hairline relative overflow-hidden rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
+      <div className="card-hairline relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
         {sent ? (
-          <div className="flex flex-col items-center gap-3 text-center animate-in fade-in-0 zoom-in-95 duration-300">
-            <div className="flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
-              <CheckCircle2 className="size-6" />
+          <div className="flex flex-col items-center gap-4 text-center animate-in fade-in-0 zoom-in-95 duration-300">
+            <div className="flex size-14 items-center justify-center rounded-full border border-success/30 bg-success/15 text-success">
+              <CheckCircle2 className="size-7" aria-hidden />
             </div>
-            <div className="space-y-1">
-              <h1 className="font-display text-lg font-semibold tracking-tight">Revisá tu email</h1>
+            <div className="space-y-2">
+              <h1 className="font-serif text-2xl font-semibold tracking-tight">Revisá tu email</h1>
               <p className="text-sm text-muted-foreground text-balance">
                 {state.message ??
-                  'Si el email está registrado, te llegará un link para crear una nueva contraseña.'}
+                  'Si el email está registrado, te llega un link para crear una nueva contraseña. Mirá el spam por las dudas.'}
               </p>
             </div>
             <Button asChild variant="outline" size="sm" className="mt-2 gap-1.5">
               <Link href="/login">
-                <ArrowLeft className="size-3.5" />
+                <ArrowLeft className="size-3.5" aria-hidden />
                 Volver al login
               </Link>
             </Button>
           </div>
         ) : (
           <>
-            <div className="space-y-1.5 text-center">
-              <h1 className="font-display text-xl font-semibold tracking-tight">
+            <div className="space-y-2 text-center">
+              <h1 className="font-serif text-2xl font-semibold tracking-tight">
                 Recuperar contraseña
               </h1>
               <p className="text-sm text-muted-foreground text-balance">
@@ -110,9 +109,9 @@ export function ForgotPasswordForm({ initialEmail }: { initialEmail: string }) {
             <p className="mt-4 text-center text-xs text-muted-foreground">
               <Link
                 href="/login"
-                className="inline-flex items-center gap-1 hover:text-foreground transition-colors"
+                className="inline-flex items-center gap-1 transition-colors hover:text-foreground"
               >
-                <ArrowLeft className="size-3" />
+                <ArrowLeft className="size-3" aria-hidden />
                 Volver al login
               </Link>
             </p>

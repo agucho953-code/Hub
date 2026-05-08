@@ -82,8 +82,8 @@ export async function markSessionPaid(slug: string, sessionId: string): Promise<
     },
   })
 
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/sesiones/${sessionId}`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/mesas/${sessionId}`)
   return {
     ok: true,
     sessionId: result.session_id,
@@ -133,8 +133,8 @@ export async function markSessionAbandoned(
     console.error('[sessions.abandon]', error.message)
     return { ok: false, message: 'No se pudo marcar como abandonada.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/sesiones/${sessionId}`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/mesas/${sessionId}`)
   return { ok: true }
 }
 
@@ -160,8 +160,8 @@ export async function mergeSessionsAction(
     console.error('[sessions.merge]', error.message)
     return { ok: false, message: 'No se pudo mergear.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/sesiones/${survivorId}`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/mesas/${survivorId}`)
   return { ok: true, message: `${absorbedIds.length} sesión(es) absorbida(s).` }
 }
 
@@ -185,8 +185,8 @@ export async function moveSessionAction(
     console.error('[sessions.move]', error.message)
     return { ok: false, message: 'No se pudo mover.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/sesiones/${sessionId}`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/mesas/${sessionId}`)
   return { ok: true }
 }
 
@@ -214,7 +214,7 @@ export async function splitSessionAction(
     console.error('[sessions.split]', error.message)
     return { ok: false, message: 'No se pudo splitear.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/sesiones/${sourceId}`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/mesas/${sourceId}`)
   return { ok: true }
 }

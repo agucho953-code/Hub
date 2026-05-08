@@ -7,7 +7,88 @@
 -- Local (CLI):
 --   supabase db reset       (corre migraciones + este seed automáticamente)
 --
--- No toca tenants, memberships ni invitations: la data de auth queda intacta.
+-- Bootstrap: si el tenant + owner user no existen, los crea
+-- (sólo en local; en remoto se asume que ya existen).
+
+-- ─────────────────────────────────────────────────────────────────
+-- BOOTSTRAP: tenant + owner user + membership (idempotente)
+-- Pensado para `supabase db reset` local. Skip seguro si ya existen.
+-- ─────────────────────────────────────────────────────────────────
+do $bootstrap$
+declare
+  v_tenant_id constant uuid := '23cf2e05-ea4d-4004-adcf-6b2346b7d676';
+  v_owner_id constant uuid := 'de880a89-b2d4-493f-a6b7-b54b2e187d9e';
+  v_owner_email text := 'owner@hub.local';
+  -- Password literal para el seed local: "hub2026" (cambialo en producción).
+  v_owner_password text := 'hub2026';
+  v_now timestamptz := now();
+begin
+  -- 1) Tenant 'hub'
+  insert into public.tenants (id, slug, name)
+  values (v_tenant_id, 'hub', 'HUB! Coffee & Bar')
+  on conflict (id) do nothing;
+
+  -- 2) Owner user en auth.users (solo en local — en remoto no se toca auth)
+  --    Detectamos local por la presencia del schema GoTrue dev. Si los
+  --    inserts fallan en producción por permisos, simplemente quedan no-op.
+  begin
+    insert into auth.users (
+      id, instance_id, email, encrypted_password, email_confirmed_at,
+      raw_user_meta_data, raw_app_meta_data,
+      role, aud, created_at, updated_at
+    )
+    values (
+      v_owner_id,
+      '00000000-0000-0000-0000-000000000000',
+      v_owner_email,
+      crypt(v_owner_password, gen_salt('bf')),
+      v_now,
+      jsonb_build_object('full_name', 'Owner HUB'),
+      jsonb_build_object('provider', 'email', 'providers', jsonb_build_array('email')),
+      'authenticated', 'authenticated',
+      v_now, v_now
+    )
+    on conflict (id) do nothing;
+
+    -- Auth identity (necesaria para que el sign-in funcione).
+    insert into auth.identities (
+      provider_id, user_id, identity_data, provider, last_sign_in_at,
+      created_at, updated_at
+    )
+    values (
+      v_owner_id,
+      v_owner_id,
+      jsonb_build_object('sub', v_owner_id::text, 'email', v_owner_email,
+        'email_verified', true, 'phone_verified', false),
+      'email', v_now, v_now, v_now
+    )
+    on conflict (provider, provider_id) do nothing;
+  exception when insufficient_privilege then
+    -- Estamos en remote: el seed sólo manipula data de negocio.
+    null;
+  end;
+
+  -- 3) Membership owner→tenant
+  insert into public.memberships (user_id, tenant_id, role)
+  values (v_owner_id, v_tenant_id, 'owner')
+  on conflict (tenant_id, user_id) do nothing;
+
+  -- 4) JWT custom claim active_tenant_id en app_metadata para que el
+  --    middleware redirija al tenant correcto desde el primer login.
+  begin
+    update auth.users
+    set raw_app_meta_data = coalesce(raw_app_meta_data, '{}'::jsonb)
+      || jsonb_build_object('active_tenant_id', v_tenant_id::text)
+    where id = v_owner_id;
+  exception when insufficient_privilege then
+    null;
+  end;
+end
+$bootstrap$;
+
+-- ─────────────────────────────────────────────────────────────────
+-- SEED DEMO (data de negocio del tenant 'hub')
+-- ─────────────────────────────────────────────────────────────────
 
 do $seed$
 declare

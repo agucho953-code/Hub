@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useId, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
-import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
+import { BrandWordmarkLarge } from '@/components/shell/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,14 +35,26 @@ function SubmitButton({ disabled }: { disabled?: boolean }) {
   )
 }
 
-export function UpdatePasswordForm({ email }: { email: string }) {
+export function UpdatePasswordForm({
+  email,
+  requiresReauth = false,
+}: {
+  email: string
+  /**
+   * `true` cuando el usuario llega con sesión normal (no de un magic link
+   * de recovery). Mostramos el campo "Contraseña actual" y exigimos reauth.
+   */
+  requiresReauth?: boolean
+}) {
   const router = useRouter()
   const [state, formAction] = useActionState(updatePasswordAction, initialState)
   const [show, setShow] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [showCurrent, setShowCurrent] = useState(false)
   const [pwd, setPwd] = useState('')
   const passId = useId()
   const confirmId = useId()
+  const currentId = useId()
 
   useEffect(() => {
     if (state.status === 'error' && state.message) toast.error(state.message)
@@ -56,19 +68,19 @@ export function UpdatePasswordForm({ email }: { email: string }) {
 
   const passError = state.status === 'error' ? state.fieldErrors?.password : undefined
   const confirmError = state.status === 'error' ? state.fieldErrors?.confirm : undefined
+  const currentError = state.status === 'error' ? state.fieldErrors?.currentPassword : undefined
 
   if (state.status === 'success') {
     return (
-      <div className="space-y-6 animate-in fade-in-0 zoom-in-95 duration-300">
-        <div className="flex items-center justify-center gap-2.5">
-          <BrandMark className="size-9" />
-          <BrandWordmark className="text-base" />
+      <div className="space-y-7 animate-in fade-in-0 zoom-in-95 duration-300">
+        <div className="flex justify-center">
+          <BrandWordmarkLarge />
         </div>
-        <div className="card-hairline rounded-2xl border bg-card/90 p-8 text-center shadow-xl backdrop-blur-xl">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
-            <CheckCircle2 className="size-6" />
+        <div className="card-hairline rounded-2xl border border-border/70 bg-card/90 p-8 text-center shadow-lg backdrop-blur-xl">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full border border-success/30 bg-success/15 text-success">
+            <CheckCircle2 className="size-7" aria-hidden />
           </div>
-          <h1 className="mt-3 font-display text-lg font-semibold">¡Listo!</h1>
+          <h1 className="mt-4 font-serif text-2xl font-semibold tracking-tight">¡Listo!</h1>
           <p className="mt-1 text-sm text-muted-foreground">Te llevamos a tu panel…</p>
         </div>
       </div>
@@ -78,25 +90,71 @@ export function UpdatePasswordForm({ email }: { email: string }) {
   const strength = pwd.length > 0 ? passwordStrength(pwd) : null
 
   return (
-    <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-center gap-2.5">
-        <BrandMark className="size-9" />
-        <BrandWordmark className="text-base" />
+    <div className="space-y-7 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+      <div className="flex justify-center">
+        <BrandWordmarkLarge />
       </div>
 
-      <div className="card-hairline rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
-        <div className="space-y-1.5 text-center">
-          <h1 className="font-display text-xl font-semibold tracking-tight">
-            Crear nueva contraseña
+      <div className="card-hairline rounded-2xl border border-border/70 bg-card/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
+        <div className="space-y-2 text-center">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight">
+            {requiresReauth ? 'Cambiar tu contraseña' : 'Crear nueva contraseña'}
           </h1>
           {email ? (
             <p className="text-sm text-muted-foreground">
               Para <span className="font-mono text-foreground">{email}</span>
             </p>
           ) : null}
+          {requiresReauth ? (
+            <p className="text-xs text-muted-foreground/80 text-balance">
+              Por seguridad, confirmá tu contraseña actual antes de cambiarla.
+            </p>
+          ) : null}
         </div>
 
         <form action={formAction} className="mt-6 space-y-4" noValidate>
+          {requiresReauth ? (
+            <div className="space-y-1.5">
+              <Label htmlFor={currentId} className="text-xs font-medium text-muted-foreground">
+                Contraseña actual
+              </Label>
+              <div className="relative">
+                <Lock
+                  aria-hidden
+                  className="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground/70"
+                />
+                <Input
+                  id={currentId}
+                  name="currentPassword"
+                  type={showCurrent ? 'text' : 'password'}
+                  required
+                  autoComplete="current-password"
+                  placeholder="La que usás para entrar"
+                  aria-invalid={Boolean(currentError) || undefined}
+                  className={cn(
+                    'h-10 pl-9 pr-10 transition-colors',
+                    currentError && 'border-destructive focus-visible:ring-destructive/40',
+                  )}
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowCurrent((v) => !v)}
+                  aria-label={showCurrent ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-pressed={showCurrent}
+                  className="absolute right-1 top-1/2 flex size-8 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground/80 transition-colors hover:bg-muted hover:text-foreground"
+                  tabIndex={-1}
+                >
+                  {showCurrent ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
+                </button>
+              </div>
+              {currentError ? (
+                <p className="text-xs text-destructive animate-in fade-in-0 slide-in-from-top-1">
+                  {currentError}
+                </p>
+              ) : null}
+            </div>
+          ) : null}
+
           <div className="space-y-1.5">
             <Label htmlFor={passId} className="text-xs font-medium text-muted-foreground">
               Contraseña nueva

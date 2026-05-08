@@ -1,5 +1,5 @@
 import { Mail } from 'lucide-react'
-import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
+import { BrandWordmarkLarge } from '@/components/shell/brand-mark'
 import { Badge } from '@/components/ui/badge'
 import { createClient } from '@/lib/supabase/server'
 import { AcceptInviteClient } from './accept-invite-client'
@@ -29,18 +29,17 @@ export default async function AcceptInvitePage({ params }: { params: Promise<{ t
         aria-hidden
         className="pointer-events-none absolute inset-x-0 -top-32 mx-auto h-[480px] w-[680px] rounded-full bg-primary/15 blur-3xl"
       />
-      <div className="relative w-full max-w-md space-y-6">
-        <div className="flex items-center justify-center gap-2.5">
-          <BrandMark className="size-9" />
-          <BrandWordmark className="text-base" />
+      <div className="relative w-full max-w-md space-y-7">
+        <div className="flex justify-center">
+          <BrandWordmarkLarge />
         </div>
 
-        <div className="card-hairline relative overflow-hidden rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
+        <div className="card-hairline relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
           <div className="text-center">
-            <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-primary/15 text-primary">
-              <Mail className="size-5" />
+            <div className="mx-auto flex size-14 items-center justify-center rounded-full border border-primary/20 bg-[--cream-tint] text-primary">
+              <Mail className="size-6" aria-hidden />
             </div>
-            <h1 className="mt-4 font-display text-xl font-semibold tracking-tight">
+            <h1 className="mt-5 font-serif text-2xl font-semibold tracking-tight">
               {preview ? 'Tenés una invitación' : 'Invitación no encontrada'}
             </h1>
             {preview ? (
