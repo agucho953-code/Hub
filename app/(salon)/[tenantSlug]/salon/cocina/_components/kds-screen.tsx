@@ -5,9 +5,17 @@ import { toast } from 'sonner'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { EmptyState } from '@/components/ui/empty-state'
+import { type AnyRealtimePayload, mergeRow } from '@/lib/realtime/optimistic-merge'
 import { subscribeChanges } from '@/lib/realtime/subscribe'
+import { useDebouncedRefresh } from '@/lib/realtime/use-debounced-refresh'
 import { cancelTicketItem, updateTicketStatus } from '@/lib/tickets/actions'
 import type { TicketItemRow, TicketRow } from '@/lib/tickets/queries'
+
+// Estados que la cocina muestra activamente (mismo whitelist que el query
+// inicial). Si un ticket cambia a `done`/`cancelled`, lo removemos del state.
+const KITCHEN_VISIBLE_STATUSES = new Set<TicketRow['status']>(['accepted', 'preparing', 'ready'])
+
+const SAFETY_NET_INTERVAL_MS = 30_000
 
 function elapsed(from: string): string {
   const ms = Date.now() - new Date(from).getTime()
@@ -44,6 +52,11 @@ export function KdsScreen({
     }
   }, [tenantId])
 
+  // Safety-net debounced refresh para casos donde el merge optimista no alcance
+  // (ej: un ticket nuevo cuyos items llegan en eventos separados al INSERT
+  // del ticket; o re-conexión tras una pérdida de WebSocket).
+  const debouncedRefresh = useDebouncedRefresh(refresh, 800)
+
   useEffect(() => {
     const cleanup = subscribeChanges({
       channel: `kitchen-${tenantId}`,
@@ -52,20 +65,49 @@ export function KdsScreen({
           event: '*',
           table: 'tickets',
           filter: `tenant_id=eq.${tenantId}`,
-          onChange: () => void refresh(),
+          onChange: (rawPayload) => {
+            const payload = rawPayload as AnyRealtimePayload
+            setTickets((prev) =>
+              mergeRow<TicketRow>(
+                prev,
+                payload,
+                (t) => t.id,
+                (t) => KITCHEN_VISIBLE_STATUSES.has(t.status),
+              ),
+            )
+            // Trigger un refresh debounced solo para sincronizar items que
+            // pueden haber llegado antes que el INSERT del ticket.
+            debouncedRefresh()
+          },
         },
-        { event: '*', table: 'ticket_items', onChange: () => void refresh() },
+        {
+          event: '*',
+          table: 'ticket_items',
+          onChange: (rawPayload) => {
+            const payload = rawPayload as AnyRealtimePayload
+            setItems((prev) => mergeRow<TicketItemRow>(prev, payload, (it) => it.id))
+          },
+        },
       ],
     })
-    return cleanup
-  }, [tenantId, refresh])
+
+    // Safety net periódico — Realtime no garantiza delivery 100%.
+    const safetyNet = window.setInterval(() => {
+      void refresh()
+    }, SAFETY_NET_INTERVAL_MS)
+
+    return () => {
+      cleanup()
+      window.clearInterval(safetyNet)
+    }
+  }, [tenantId, refresh, debouncedRefresh])
 
   const handle = (fn: () => Promise<{ ok: boolean; message?: string }>, success: string) => {
     startTransition(async () => {
       const r = await fn()
       if (r.ok) {
         toast.success(success)
-        void refresh()
+        // Realtime va a propagar el cambio; no forzamos refresh acá.
       } else {
         toast.error(r.message ?? 'Error')
       }

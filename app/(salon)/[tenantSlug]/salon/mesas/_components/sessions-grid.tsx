@@ -6,7 +6,13 @@ import { useCallback, useEffect, useState } from 'react'
 import { Badge } from '@/components/ui/badge'
 import { EmptyState } from '@/components/ui/empty-state'
 import { subscribeChanges } from '@/lib/realtime/subscribe'
+import { useDebouncedRefresh } from '@/lib/realtime/use-debounced-refresh'
 import type { WaiterSessionRow } from '@/lib/sessions-waiter/queries'
+
+// Cada 30s también re-fetcheamos por si perdimos un payload (Realtime no
+// garantiza delivery 100%). Esto es safety net, no la fuente principal.
+const SAFETY_NET_INTERVAL_MS = 30_000
+const REALTIME_DEBOUNCE_MS = 500
 
 export function SessionsGrid({
   tenantSlug,
@@ -29,6 +35,11 @@ export function SessionsGrid({
     }
   }, [tenantId])
 
+  // Agrupar varios payloads que llegan juntos en un único refresh.
+  // (Las counts de la vista vienen con joins múltiples; un optimistic merge
+  // puro requeriría replicar la lógica del query — overkill por ahora.)
+  const debouncedRefresh = useDebouncedRefresh(refresh, REALTIME_DEBOUNCE_MS)
+
   useEffect(() => {
     const cleanup = subscribeChanges({
       channel: `waiter-${tenantId}`,
@@ -37,19 +48,28 @@ export function SessionsGrid({
           event: '*',
           table: 'tickets',
           filter: `tenant_id=eq.${tenantId}`,
-          onChange: () => void refresh(),
+          onChange: debouncedRefresh,
         },
         {
           event: '*',
           table: 'table_sessions',
           filter: `tenant_id=eq.${tenantId}`,
-          onChange: () => void refresh(),
+          onChange: debouncedRefresh,
         },
-        { event: 'INSERT', table: 'table_session_events', onChange: () => void refresh() },
+        { event: 'INSERT', table: 'table_session_events', onChange: debouncedRefresh },
       ],
     })
-    return cleanup
-  }, [tenantId, refresh])
+
+    // Safety net: poll cada 30s aunque no haya tráfico realtime.
+    const safetyNet = window.setInterval(() => {
+      void refresh()
+    }, SAFETY_NET_INTERVAL_MS)
+
+    return () => {
+      cleanup()
+      window.clearInterval(safetyNet)
+    }
+  }, [tenantId, refresh, debouncedRefresh])
 
   if (sessions.length === 0) {
     return (
