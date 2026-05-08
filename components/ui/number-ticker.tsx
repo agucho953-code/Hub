@@ -1,14 +1,39 @@
 'use client'
 
 import { useInView, useMotionValue, useSpring } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useMemo, useRef } from 'react'
 import { cn } from '@/lib/utils'
+
+/**
+ * Kinds de formato serializables — usalos en lugar de pasar funciones cuando
+ * el StatCard / page sea Server Component (las funciones no cruzan RSC).
+ */
+export type NumberFormatKind =
+  | 'integer'
+  | 'decimal-1'
+  | 'decimal-2'
+  | 'currency-cents-ars'
+  | 'percent-100'
+
+const formatters: Record<NumberFormatKind, (n: number) => string> = {
+  integer: (n) => Intl.NumberFormat('es-AR').format(Math.round(n)),
+  'decimal-1': (n) =>
+    Intl.NumberFormat('es-AR', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(n),
+  'decimal-2': (n) =>
+    Intl.NumberFormat('es-AR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n),
+  'currency-cents-ars': (n) =>
+    `$${(Math.round(n) / 100).toLocaleString('es-AR', { maximumFractionDigits: 0 })}`,
+  'percent-100': (n) => `${Math.round(n)}%`,
+}
 
 type NumberTickerProps = {
   value: number
   decimalPlaces?: number
   durationMs?: number
+  /** Función custom — solo válida en Client Components (no cruza RSC). */
   format?: (n: number) => string
+  /** Kind serializable — preferí esto cuando el padre es Server Component. */
+  formatKind?: NumberFormatKind
   className?: string
   startOnView?: boolean
   delayMs?: number
@@ -30,6 +55,7 @@ export function NumberTicker({
   decimalPlaces = 0,
   durationMs = 800,
   format,
+  formatKind,
   className,
   startOnView = false,
   delayMs = 0,
@@ -40,7 +66,12 @@ export function NumberTicker({
   const damping = 25
   const springValue = useSpring(motionValue, { stiffness, damping })
   const inView = useInView(ref, { once: true, margin: '0px' })
-  const formatter = format ?? ((n: number) => defaultFormat(n, decimalPlaces))
+
+  const formatter = useMemo(() => {
+    if (format) return format
+    if (formatKind) return formatters[formatKind]
+    return (n: number) => defaultFormat(n, decimalPlaces)
+  }, [format, formatKind, decimalPlaces])
 
   useEffect(() => {
     const el = ref.current

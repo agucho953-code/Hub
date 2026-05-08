@@ -1,25 +1,10 @@
-import {
-  BarChart3,
-  CalendarDays,
-  ClipboardList,
-  Inbox,
-  LayoutDashboard,
-  type LucideIcon,
-  Megaphone,
-  Settings2,
-  Stamp,
-  Star,
-  Users,
-  UsersRound,
-  UtensilsCrossed,
-  Workflow,
-} from 'lucide-react'
 import type { TenantRole } from '@/lib/tenant/types'
+import type { NavIconKey } from './nav-icons'
 
 export type NavItem = {
   label: string
   href: (slug: string) => string
-  icon: LucideIcon
+  icon: NavIconKey
   /** Si está, sólo se muestra a estos roles. Si no, a todos. */
   roles?: TenantRole[]
   /** Match exacto (true) o prefijo (false, default). */
@@ -31,6 +16,20 @@ export type NavItem = {
 export type NavGroup = {
   label: string
   items: NavItem[]
+}
+
+/** Versión "resuelta" — href ya evaluado, todo serializable para cruzar a Client Components. */
+export type ResolvedNavItem = {
+  label: string
+  href: string
+  iconKey: NavIconKey
+  exact?: boolean
+  newTab?: boolean
+}
+
+export type ResolvedNavGroup = {
+  label: string
+  items: ResolvedNavItem[]
 }
 
 /**
@@ -50,20 +49,20 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Resumen',
         href: (s) => `/${s}`,
-        icon: LayoutDashboard,
+        icon: 'LayoutDashboard',
         exact: true,
       },
       {
         label: 'Salón en vivo',
         href: (s) => `/${s}/salon/mesas`,
-        icon: ClipboardList,
+        icon: 'ClipboardList',
         newTab: true,
         roles: ['owner'],
       },
       {
         label: 'Bandeja',
         href: (s) => `/${s}/bandeja`,
-        icon: Inbox,
+        icon: 'Inbox',
       },
     ],
   },
@@ -73,12 +72,12 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Personas',
         href: (s) => `/${s}/clientes`,
-        icon: Users,
+        icon: 'Users',
       },
       {
         label: 'Audiencias',
         href: (s) => `/${s}/audiencias`,
-        icon: UsersRound,
+        icon: 'UsersRound',
         roles: ['owner'],
       },
     ],
@@ -89,19 +88,19 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Difusiones',
         href: (s) => `/${s}/difusiones`,
-        icon: Megaphone,
+        icon: 'Megaphone',
         roles: ['owner'],
       },
       {
         label: 'Flows',
         href: (s) => `/${s}/flows`,
-        icon: Workflow,
+        icon: 'Workflow',
         roles: ['owner'],
       },
       {
         label: 'Eventos',
         href: (s) => `/${s}/eventos`,
-        icon: CalendarDays,
+        icon: 'CalendarDays',
       },
     ],
   },
@@ -111,19 +110,19 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Menú',
         href: (s) => `/${s}/menu`,
-        icon: UtensilsCrossed,
+        icon: 'UtensilsCrossed',
         roles: ['owner'],
       },
       {
         label: 'Puntos',
         href: (s) => `/${s}/puntos`,
-        icon: Star,
+        icon: 'Star',
         roles: ['owner'],
       },
       {
         label: 'Punch cards',
         href: (s) => `/${s}/punch-cards`,
-        icon: Stamp,
+        icon: 'Stamp',
         roles: ['owner'],
       },
     ],
@@ -134,7 +133,7 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Estadísticas',
         href: (s) => `/${s}/estadisticas`,
-        icon: BarChart3,
+        icon: 'BarChart3',
         roles: ['owner'],
       },
     ],
@@ -145,7 +144,7 @@ export const NAV_GROUPS: NavGroup[] = [
       {
         label: 'Configuración',
         href: (s) => `/${s}/configuracion`,
-        icon: Settings2,
+        icon: 'Settings2',
         roles: ['owner'],
       },
     ],
@@ -157,4 +156,21 @@ export function visibleGroups(role: TenantRole): NavGroup[] {
     ...group,
     items: group.items.filter((item) => !item.roles || item.roles.includes(role)),
   })).filter((group) => group.items.length > 0)
+}
+
+/**
+ * Resuelve los grupos a estructuras serializables (href ejecutado, icon como
+ * key string). Llamar **server-side** antes de pasar a un Client Component.
+ */
+export function resolveNavGroups(role: TenantRole, slug: string): ResolvedNavGroup[] {
+  return visibleGroups(role).map((group) => ({
+    label: group.label,
+    items: group.items.map((item) => ({
+      label: item.label,
+      href: item.href(slug),
+      iconKey: item.icon,
+      exact: item.exact,
+      newTab: item.newTab,
+    })),
+  }))
 }

@@ -1,7 +1,7 @@
 import type { LucideIcon } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
-import { NumberTicker } from './number-ticker'
+import { NumberTicker, type NumberFormatKind } from './number-ticker'
 
 type Tone = 'default' | 'positive' | 'negative' | 'muted'
 
@@ -18,10 +18,13 @@ type StatCardProps = {
   value?: ReactNode
   /** Valor numérico que se anima de 0→n con NumberTicker. */
   numberValue?: number
-  /** Decimales para el ticker. */
+  /** Decimales para el ticker (cuando no usás `numberFormatKind`). */
   numberDecimals?: number
-  /** Formatter custom para el ticker (ej. moneda). */
-  numberFormat?: (n: number) => string
+  /**
+   * Kind serializable de formato — preferí esto en Server Components ya que
+   * pasar funciones a NumberTicker (Client) rompe la frontera RSC.
+   */
+  numberFormatKind?: NumberFormatKind
   hint?: ReactNode
   delta?: ReactNode
   deltaTone?: Tone
@@ -35,7 +38,7 @@ export function StatCard({
   value,
   numberValue,
   numberDecimals = 0,
-  numberFormat,
+  numberFormatKind,
   hint,
   delta,
   deltaTone = 'muted',
@@ -48,7 +51,7 @@ export function StatCard({
       <NumberTicker
         value={numberValue}
         decimalPlaces={numberDecimals}
-        format={numberFormat}
+        formatKind={numberFormatKind}
       />
     ) : (
       value

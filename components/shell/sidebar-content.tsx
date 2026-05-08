@@ -1,7 +1,7 @@
 import Link from 'next/link'
 import type { Tenant, TenantRole } from '@/lib/tenant/types'
 import { BrandMark, BrandWordmark } from './brand-mark'
-import { visibleGroups } from './nav-config'
+import { resolveNavGroups } from './nav-config'
 import { SidebarNav } from './sidebar-nav'
 
 export function SidebarContent({
@@ -13,7 +13,9 @@ export function SidebarContent({
   role: TenantRole
   onNavigate?: () => void
 }) {
-  const groups = visibleGroups(role)
+  // Resolver server-side: convertir href:function + icon:LucideIcon en datos
+  // serializables para cruzar la frontera RSC sin romper.
+  const groups = resolveNavGroups(role, tenant.slug)
 
   return (
     <>
@@ -31,7 +33,7 @@ export function SidebarContent({
       <div className="mx-3 h-px bg-border/60" />
 
       <div className="flex-1 overflow-y-auto">
-        <SidebarNav groups={groups} tenantSlug={tenant.slug} onNavigate={onNavigate} />
+        <SidebarNav groups={groups} onNavigate={onNavigate} />
       </div>
 
       <div className="border-t border-border/60 px-4 py-3">

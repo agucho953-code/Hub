@@ -133,7 +133,7 @@ export default async function TenantHomePage({
           icon={Users}
           label="Clientes"
           numberValue={kpis.customers_total}
-          numberFormat={(n) => numberFmt.format(Math.round(n))}
+          numberFormatKind="integer"
           hint={newLast > 0 ? `+${numberFmt.format(newLast)} nuevos en 30d` : 'Sin altas en 30d'}
           delta={newCustomersDelta.label}
           deltaTone={newCustomersDelta.tone}
@@ -142,7 +142,7 @@ export default async function TenantHomePage({
           icon={Sparkles}
           label="Activos 30d"
           numberValue={kpis.customers_active_30d}
-          numberFormat={(n) => numberFmt.format(Math.round(n))}
+          numberFormatKind="integer"
           hint={
             kpis.customers_total > 0
               ? `${Math.round((kpis.customers_active_30d / kpis.customers_total) * 100)}% del total`
@@ -161,7 +161,7 @@ export default async function TenantHomePage({
           icon={Receipt}
           label="Visitas 30d"
           numberValue={kpis.visits_30d}
-          numberFormat={(n) => numberFmt.format(Math.round(n))}
+          numberFormatKind="integer"
           hint={
             visitsLast > 0 ? `Promedio ${(visitsLast / 30).toFixed(1)}/día` : 'Sin visitas todavía'
           }
@@ -175,7 +175,7 @@ export default async function TenantHomePage({
           icon={Banknote}
           label="Revenue 30d"
           numberValue={kpis.revenue_30d_cents}
-          numberFormat={(n) => fmtCents(Math.round(n))}
+          numberFormatKind="currency-cents-ars"
           hint={
             kpis.visits_30d > 0
               ? `Ticket promedio ${fmtCents(kpis.avg_ticket_30d_cents)}`

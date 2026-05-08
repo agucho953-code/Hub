@@ -1,10 +1,10 @@
 'use client'
 
-import { ArrowUpRight } from 'lucide-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { cn } from '@/lib/utils'
-import type { NavGroup, NavItem } from './nav-config'
+import type { ResolvedNavGroup, ResolvedNavItem } from './nav-config'
+import { NAV_ICONS } from './nav-icons'
 
 function isActive(pathname: string, href: string, exact?: boolean) {
   if (exact) return pathname === href
@@ -14,11 +14,9 @@ function isActive(pathname: string, href: string, exact?: boolean) {
 
 export function SidebarNav({
   groups,
-  tenantSlug,
   onNavigate,
 }: {
-  groups: NavGroup[]
-  tenantSlug: string
+  groups: ResolvedNavGroup[]
   onNavigate?: () => void
 }) {
   const pathname = usePathname()
@@ -35,8 +33,7 @@ export function SidebarNav({
               <li key={item.label}>
                 <SidebarLink
                   item={item}
-                  active={!item.newTab && isActive(pathname, item.href(tenantSlug), item.exact)}
-                  href={item.href(tenantSlug)}
+                  active={!item.newTab && isActive(pathname, item.href, item.exact)}
                   onNavigate={onNavigate}
                 />
               </li>
@@ -50,29 +47,28 @@ export function SidebarNav({
 
 function SidebarLink({
   item,
-  href,
   active,
   onNavigate,
 }: {
-  item: NavItem
-  href: string
+  item: ResolvedNavItem
   active: boolean
   onNavigate?: () => void
 }) {
-  const Icon = item.icon
+  const Icon = NAV_ICONS[item.iconKey]
+  const ArrowOut = NAV_ICONS.ArrowUpRight
 
   if (item.newTab) {
     return (
       <Link
-        href={href}
+        href={item.href}
         target="_blank"
         rel="noopener noreferrer"
         onClick={onNavigate}
         className="group relative flex h-9 items-center gap-2.5 rounded-md px-2.5 text-sm font-medium text-muted-foreground transition-colors duration-[var(--duration-fast)] ease-[var(--ease-out)] hover:bg-[--cream-tint] hover:text-foreground"
       >
-        <Icon className="size-4 transition-colors group-hover:text-primary" />
+        <Icon className="size-4 transition-colors group-hover:text-primary" aria-hidden />
         <span className="truncate">{item.label}</span>
-        <ArrowUpRight
+        <ArrowOut
           className="ml-auto size-3.5 text-muted-foreground/60 transition-transform group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-foreground"
           aria-hidden
         />
@@ -82,7 +78,7 @@ function SidebarLink({
 
   return (
     <Link
-      href={href}
+      href={item.href}
       onClick={onNavigate}
       aria-current={active ? 'page' : undefined}
       className={cn(
@@ -101,6 +97,7 @@ function SidebarLink({
           'size-4 transition-colors',
           active ? 'text-primary' : 'text-muted-foreground group-hover:text-foreground',
         )}
+        aria-hidden
       />
       <span className="truncate">{item.label}</span>
     </Link>
