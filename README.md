@@ -10,15 +10,32 @@ cd hub
 npm install
 cp .env.example .env.local           # completar las variables
 npx supabase start                    # levanta Postgres local + Studio
-npx supabase db push                  # aplica migraciones
+npm run db:reset                      # migraciones + seed.sql (incluye bootstrap)
 npm run dev                           # http://localhost:3000
 ```
+
+`db:reset` corre `seed.sql`, que crea de forma idempotente:
+- Tenant `HUB! Coffee & Bar` con slug `hub` (id fijo en el seed).
+- Owner user `owner@hub.local` (password `hub2026`) con `active_tenant_id`
+  apuntando a HUB.
+- Membership owner → HUB.
+- Toda la data demo (40 clientes, 5 categorías de menú, eventos, audiencias,
+  difusiones, flows, etc.) lista para exhibir el dashboard.
 
 Después de cada migración nueva regenerá los tipos:
 
 ```bash
 npm run db:types
 ```
+
+### Credenciales de prueba (local)
+
+| Email | Password | Rol | Tenant |
+|---|---|---|---|
+| `owner@hub.local` | `hub2026` | `owner` | `/hub` |
+
+> Estas credenciales sólo aplican en local — el seed detecta permisos y
+> omite el bootstrap de auth en proyectos remotos.
 
 ## Workspaces
 
