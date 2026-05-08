@@ -1,0 +1,28 @@
+{
+  "name": "HUB! · Salón",
+  "short_name": "HUB!",
+  "description": "Modo salón para staff de HUB!. Mesas en vivo, cocina y bandeja desde tu celular.",
+  "start_url": "/?source=pwa",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#f5edd7",
+  "theme_color": "#1f4d38",
+  "lang": "es-AR",
+  "dir": "ltr",
+  "categories": ["business", "productivity", "food"],
+  "icons": [
+    {
+      "src": "/icons/hub.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/hub-maskable.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "maskable"
+    }
+  ]
+}

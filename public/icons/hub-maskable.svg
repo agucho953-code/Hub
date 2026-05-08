@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="HUB!">
+  <title>HUB!</title>
+  <rect width="512" height="512" fill="#1f4d38"/>
+  <rect x="40" y="40" width="432" height="432" rx="80" fill="#f5edd7"/>
+  <text x="256" y="320"
+        font-family="Georgia, 'Times New Roman', serif"
+        font-size="220"
+        font-weight="700"
+        fill="#1f4d38"
+        text-anchor="middle"
+        letter-spacing="-10">HUB!</text>
+</svg>
