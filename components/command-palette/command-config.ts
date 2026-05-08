@@ -181,7 +181,7 @@ export const commandEntries: CommandEntry[] = [
     icon: Star,
     group: 'Ir a',
     type: 'navigate',
-    href: (s) => `/${s}/configuracion/puntos`,
+    href: (s) => `/${s}/puntos`,
     keywords: ['fidelidad', 'rewards'],
   },
   {
@@ -190,7 +190,7 @@ export const commandEntries: CommandEntry[] = [
     icon: Stamp,
     group: 'Ir a',
     type: 'navigate',
-    href: (s) => `/${s}/configuracion/punch-cards`,
+    href: (s) => `/${s}/punch-cards`,
     keywords: ['tarjetas', 'sellos'],
   },
   {
@@ -199,7 +199,7 @@ export const commandEntries: CommandEntry[] = [
     icon: Tags,
     group: 'Ir a',
     type: 'navigate',
-    href: (s) => `/${s}/configuracion/tags`,
+    href: (s) => `/${s}/configuracion/mensajeria?tab=tags`,
     keywords: ['etiquetas'],
   },
   {
@@ -208,7 +208,7 @@ export const commandEntries: CommandEntry[] = [
     icon: Zap,
     group: 'Ir a',
     type: 'navigate',
-    href: (s) => `/${s}/configuracion/auto-aceptacion`,
+    href: (s) => `/${s}/configuracion/local?tab=auto-aceptacion`,
     keywords: ['settings'],
   },
   {
@@ -217,7 +217,7 @@ export const commandEntries: CommandEntry[] = [
     icon: MessageSquareText,
     group: 'Ir a',
     type: 'navigate',
-    href: (s) => `/${s}/configuracion/templates`,
+    href: (s) => `/${s}/configuracion/mensajeria?tab=plantillas`,
     keywords: ['mensajes'],
   },
   {

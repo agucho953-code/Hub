@@ -116,13 +116,13 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       {
         label: 'Puntos',
-        href: (s) => `/${s}/configuracion/puntos`,
+        href: (s) => `/${s}/puntos`,
         icon: Star,
         roles: ['owner'],
       },
       {
         label: 'Punch cards',
-        href: (s) => `/${s}/configuracion/punch-cards`,
+        href: (s) => `/${s}/punch-cards`,
         icon: Stamp,
         roles: ['owner'],
       },
