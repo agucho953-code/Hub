@@ -31,7 +31,7 @@ export function CalendarMonth({
   for (const ev of events) {
     const key = format(new Date(ev.starts_at), 'yyyy-MM-dd')
     if (!eventsByDay.has(key)) eventsByDay.set(key, [])
-    eventsByDay.get(key)!.push(ev)
+    eventsByDay.get(key)?.push(ev)
   }
 
   const weekHeader = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom']

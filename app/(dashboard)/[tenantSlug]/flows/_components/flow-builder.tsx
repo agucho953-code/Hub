@@ -22,7 +22,6 @@ import {
   MessageSquareText,
   Plus,
   Tag as TagIcon,
-  Workflow,
   X,
   Zap,
 } from 'lucide-react'

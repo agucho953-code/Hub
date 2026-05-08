@@ -98,7 +98,6 @@ export function NewReservationDialog({
                   setPicked(null)
                 }}
                 placeholder="Nombre o teléfono…"
-                // biome-ignore lint/a11y/noAutofocus: dialog operativo, foco inmediato en search
                 autoFocus
                 className="h-9 w-full rounded-lg border border-border/60 bg-background/40 pl-9 pr-3 text-sm outline-none focus:border-ring focus:ring-2 focus:ring-ring/40"
               />

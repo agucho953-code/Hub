@@ -59,7 +59,7 @@ describeIfRls('RLS — events + reservations', () => {
       })
       .select('id')
       .single()
-    eventId = ev!.id
+    eventId = ev?.id
 
     // 6 customers
     for (let i = 0; i < 6; i++) {
@@ -73,7 +73,7 @@ describeIfRls('RLS — events + reservations', () => {
         })
         .select('id')
         .single()
-      customers.push(c!.id)
+      customers.push(c?.id)
     }
 
     const { data: cross } = await service
@@ -86,7 +86,7 @@ describeIfRls('RLS — events + reservations', () => {
       })
       .select('id')
       .single()
-    crossCustomer = cross!.id
+    crossCustomer = cross?.id
   })
 
   afterAll(async () => {
@@ -247,8 +247,8 @@ describeIfRls('RLS — events + reservations', () => {
     // Como ledger es vía RPC, usamos service para insert directo (se permite con service_role).
     await service.from('reservations').insert({
       tenant_id: tenantA.id,
-      event_id: pastEv!.id,
-      customer_id: c!.id,
+      event_id: pastEv?.id,
+      customer_id: c?.id,
       guests_count: 1,
       status: 'confirmed',
     })
@@ -256,13 +256,13 @@ describeIfRls('RLS — events + reservations', () => {
     const { data, error } = await service.rpc('finish_past_events')
     expect(error).toBeNull()
 
-    const { data: ev } = await service.from('events').select('status').eq('id', pastEv!.id).single()
+    const { data: ev } = await service.from('events').select('status').eq('id', pastEv?.id).single()
     expect(ev?.status).toBe('finished')
 
     const { data: res } = await service
       .from('reservations')
       .select('status')
-      .eq('event_id', pastEv!.id)
+      .eq('event_id', pastEv?.id)
     expect(res?.every((r) => r.status === 'no_show')).toBe(true)
     const result = Array.isArray(data) ? data[0] : data
     expect(result?.finished_events).toBeGreaterThan(0)
@@ -293,21 +293,21 @@ describeIfRls('RLS — events + reservations', () => {
       .select('id')
       .single()
     await cashierA.client.rpc('create_reservation', {
-      p_event_id: ev!.id,
-      p_customer_id: c!.id,
+      p_event_id: ev?.id,
+      p_customer_id: c?.id,
       p_guests: 1,
     })
 
-    const { error } = await ownerA.client.rpc('cancel_event', { p_event_id: ev!.id })
+    const { error } = await ownerA.client.rpc('cancel_event', { p_event_id: ev?.id })
     expect(error).toBeNull()
 
     const { data: refreshed } = await service
       .from('events')
       .select('status')
-      .eq('id', ev!.id)
+      .eq('id', ev?.id)
       .single()
     expect(refreshed?.status).toBe('cancelled')
-    const { data: rsv } = await service.from('reservations').select('status').eq('event_id', ev!.id)
+    const { data: rsv } = await service.from('reservations').select('status').eq('event_id', ev?.id)
     expect(rsv?.every((r) => r.status === 'cancelled')).toBe(true)
   })
 

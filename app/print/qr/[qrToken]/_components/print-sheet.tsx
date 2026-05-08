@@ -19,6 +19,7 @@ export function PrintSheet({ sheet }: { sheet: QrSheet }) {
         <p className="text-xs uppercase tracking-widest text-gray-500">{sheet.tenantName}</p>
         <h1 className="mt-1 text-3xl font-bold">{sheet.tableLabel}</h1>
       </div>
+      {/* biome-ignore lint/performance/noImgElement: data-url QR para impresión, Next/Image no aplica */}
       <img src={sheet.qrDataUrl} alt={`QR de ${sheet.tableLabel}`} className="size-72" />
       <p className="text-center text-sm text-gray-700">
         Escaneá para ver la carta y pedir desde tu celular.
