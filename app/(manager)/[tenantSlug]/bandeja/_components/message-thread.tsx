@@ -1,5 +1,6 @@
 'use client'
 
+import { format } from 'date-fns'
 import { Check, CheckCheck, Clock3, TriangleAlert } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 import type { MessageRow } from '@/lib/bandeja/queries'
@@ -96,10 +97,7 @@ export function MessageThread({
                 )}
               >
                 <span className="tabular-nums">
-                  {new Date(m.sent_at ?? m.created_at).toLocaleTimeString('es-AR', {
-                    hour: '2-digit',
-                    minute: '2-digit',
-                  })}
+                  {format(new Date(m.sent_at ?? m.created_at), 'HH:mm')}
                 </span>
                 {outbound && m.status ? <StatusIcon status={m.status} /> : null}
                 {m.error ? <span className="ml-1 truncate">· {m.error}</span> : null}

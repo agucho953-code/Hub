@@ -3,8 +3,24 @@ import type { SupabaseClient } from '@supabase/supabase-js'
 import { type NextRequest, NextResponse } from 'next/server'
 import { getSupabaseClientEnv } from '@/lib/env'
 
-const PUBLIC_PATHS = new Set(['/login', '/auth/callback'])
-const PUBLIC_PREFIXES = ['/capture/', '/api/webhooks/', '/_next/', '/auth/', '/accept-invite/']
+const PUBLIC_PATHS = new Set([
+  '/login',
+  '/auth/callback',
+  '/manifest.webmanifest',
+  '/sw.js',
+  '/apple-touch-icon.png',
+  '/robots.txt',
+  '/forgot-password',
+])
+const PUBLIC_PREFIXES = [
+  '/capture/',
+  '/api/webhooks/',
+  '/_next/',
+  '/auth/',
+  '/accept-invite/',
+  '/icons/',
+  '/forgot-password',
+]
 
 /**
  * Slugs que NO son tenants — paths globales o reservados de la app.
@@ -27,6 +43,12 @@ function isPublicPath(pathname: string) {
   if (PUBLIC_PATHS.has(pathname)) return true
   if (PUBLIC_PREFIXES.some((prefix) => pathname.startsWith(prefix))) return true
   if (pathname === '/favicon.ico' || pathname.startsWith('/static/')) return true
+  // Cualquier asset estático con extensión común no requiere auth.
+  if (
+    /\.(?:png|jpg|jpeg|webp|svg|ico|gif|woff2?|ttf|otf|css|js|map|webmanifest)$/i.test(pathname)
+  ) {
+    return true
+  }
   return false
 }
 

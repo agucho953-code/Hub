@@ -1,5 +1,6 @@
 'use client'
 
+import { format } from 'date-fns'
 import { Check, ChefHat, Truck, X } from 'lucide-react'
 import { useTransition } from 'react'
 import { toast } from 'sonner'
@@ -47,11 +48,7 @@ export function TicketCard({
       <div className="flex items-start justify-between gap-2">
         <div>
           <p className="text-xs uppercase tracking-wide text-muted-foreground">
-            #{ticket.id.slice(0, 6)} ·{' '}
-            {new Date(ticket.submitted_at).toLocaleTimeString('es-AR', {
-              hour: '2-digit',
-              minute: '2-digit',
-            })}
+            #{ticket.id.slice(0, 6)} · {format(new Date(ticket.submitted_at), 'HH:mm')}
           </p>
           <Badge variant={STATUS_VARIANTS[ticket.status] ?? 'outline'} className="mt-1">
             {ticket.status}
