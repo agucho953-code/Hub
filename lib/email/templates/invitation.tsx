@@ -71,11 +71,14 @@ function InvitationEmail({ tenantName, inviterName, role, acceptUrl }: Invitatio
   )
 }
 
+// Cream + forest palette resuelto a hex (los clientes de email no soportan CSS vars).
 const body: React.CSSProperties = {
   margin: 0,
   padding: 0,
-  background: '#f5f5f4',
-  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  background: '#f5edd7',
+  fontFamily:
+    "Georgia, 'Times New Roman', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
+  color: '#1f4d38',
 }
 const container: React.CSSProperties = {
   maxWidth: 520,
@@ -83,31 +86,36 @@ const container: React.CSSProperties = {
   padding: '0 16px',
 }
 const card: React.CSSProperties = {
-  background: '#ffffff',
-  borderRadius: 12,
+  background: '#fffaee',
+  borderRadius: 14,
   padding: '32px 28px',
-  boxShadow: '0 1px 3px rgba(0,0,0,0.08)',
+  border: '1px solid #d9cfae',
+  boxShadow: '0 1px 3px rgba(31,77,56,0.08)',
 }
 const eyebrow: React.CSSProperties = {
   margin: 0,
   fontSize: 11,
   fontWeight: 600,
   textTransform: 'uppercase',
-  letterSpacing: '1.6px',
-  color: '#6b7280',
+  letterSpacing: '2px',
+  color: '#5b6f63',
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif",
 }
 const heading: React.CSSProperties = {
-  margin: '4px 0 16px',
-  fontSize: 22,
-  lineHeight: 1.3,
-  color: '#111827',
-  fontWeight: 600,
+  margin: '8px 0 16px',
+  fontSize: 28,
+  lineHeight: 1.2,
+  color: '#1f4d38',
+  fontWeight: 700,
+  fontFamily: "Georgia, 'Times New Roman', serif",
+  letterSpacing: '-0.02em',
 }
 const paragraph: React.CSSProperties = {
   margin: '0 0 12px',
   fontSize: 14,
-  color: '#374151',
-  lineHeight: 1.5,
+  color: '#1f4d38',
+  lineHeight: 1.55,
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif",
 }
 const btnWrapper: React.CSSProperties = {
   textAlign: 'center',
@@ -115,34 +123,37 @@ const btnWrapper: React.CSSProperties = {
 }
 const button: React.CSSProperties = {
   display: 'inline-block',
-  padding: '12px 28px',
-  background: '#111827',
-  color: '#ffffff',
+  padding: '14px 32px',
+  background: '#1f4d38',
+  color: '#f5edd7',
   textDecoration: 'none',
-  borderRadius: 8,
+  borderRadius: 10,
   fontSize: 14,
   fontWeight: 600,
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif",
 }
 const hr: React.CSSProperties = {
   border: 'none',
-  borderTop: '1px solid #e5e7eb',
+  borderTop: '1px solid #e8dec2',
   margin: '24px 0',
 }
 const smallNote: React.CSSProperties = {
   margin: 0,
   fontSize: 12,
-  color: '#6b7280',
+  color: '#5b6f63',
   lineHeight: 1.5,
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif",
 }
 const smallLink: React.CSSProperties = {
-  color: '#2563eb',
+  color: '#2d6a4f',
   wordBreak: 'break-all',
 }
 const footer: React.CSSProperties = {
   margin: '16px 0 0',
   textAlign: 'center',
   fontSize: 11,
-  color: '#9ca3af',
+  color: '#5b6f63',
+  fontFamily: "-apple-system, BlinkMacSystemFont, 'Segoe UI', Inter, Helvetica, Arial, sans-serif",
 }
 
 export type RenderedInvitation = {
