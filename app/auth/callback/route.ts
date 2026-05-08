@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { setRecoveryFlowCookie } from '@/lib/auth/recovery-cookie'
 import { createClient } from '@/lib/supabase/server'
 
 const SAFE_NEXT = (value: string | null): string => {
@@ -28,6 +29,12 @@ export async function GET(request: Request) {
     const supabase = await createClient()
     const { error } = await supabase.auth.exchangeCodeForSession(code)
     if (!error) {
+      // Cuando el callback viene del email de recovery, marcamos una cookie
+      // efímera que `updatePasswordAction` lee para saltar la reauth (el
+      // usuario justamente olvidó su contraseña actual).
+      if (type === 'recovery') {
+        await setRecoveryFlowCookie()
+      }
       // Forzamos refresh para que el custom_access_token_hook
       // inyecte el active_tenant_id en el JWT antes de la 1ra página.
       await supabase.auth.refreshSession()
