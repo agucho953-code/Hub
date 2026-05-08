@@ -55,7 +55,7 @@ export const NAV_GROUPS: NavGroup[] = [
       },
       {
         label: 'Salón en vivo',
-        href: (s) => `/${s}/sesiones`,
+        href: (s) => `/${s}/salon/mesas`,
         icon: ClipboardList,
         newTab: true,
         roles: ['owner'],

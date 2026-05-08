@@ -54,8 +54,8 @@ export function SessionsGrid({
   if (sessions.length === 0) {
     return (
       <EmptyState
-        title="No hay mesas abiertas"
-        description="Cuando un comensal escanee un QR, la mesa va a aparecer acá."
+        title="Por ahora no hay mesas abiertas"
+        description="Cuando un comensal escanee un QR de mesa, va a aparecer acá."
       />
     )
   }
@@ -65,12 +65,14 @@ export function SessionsGrid({
       {sessions.map((s) => (
         <Link
           key={s.id}
-          href={`/${tenantSlug}/sesiones/${s.id}`}
-          className="block rounded-xl border bg-card p-4 shadow-sm transition-colors hover:bg-card/95"
+          href={`/${tenantSlug}/salon/mesas/${s.id}`}
+          className="card-hairline group block rounded-xl border border-border/70 bg-card/85 p-4 shadow-xs transition-[transform,box-shadow,background-color] duration-[var(--duration-base)] ease-[var(--ease-out)] hover:-translate-y-0.5 hover:bg-card hover:shadow-md"
         >
           <div className="flex items-start justify-between gap-2">
             <div>
-              <h3 className="font-medium">{s.table_label ?? 'Mesa'}</h3>
+              <h3 className="font-serif text-lg font-semibold tracking-tight">
+                {s.table_label ?? 'Mesa'}
+              </h3>
               <p className="text-xs text-muted-foreground">
                 Abierta{' '}
                 {new Date(s.opened_at).toLocaleTimeString('es-AR', {
@@ -79,22 +81,24 @@ export function SessionsGrid({
                 })}
               </p>
             </div>
-            <p className="font-semibold">${(s.total_cents / 100).toFixed(2)}</p>
+            <p className="font-serif text-xl font-semibold tabular-nums">
+              ${(s.total_cents / 100).toFixed(2)}
+            </p>
           </div>
           <div className="mt-3 flex flex-wrap gap-1.5">
             <Badge variant="outline" className="gap-1">
-              <Users className="size-3" />
+              <Users className="size-3" aria-hidden />
               {s.guest_count}
             </Badge>
             {s.pending_tickets > 0 && (
-              <Badge className="gap-1 bg-amber-100 text-amber-900 hover:bg-amber-100">
-                <Bell className="size-3" />
-                {s.pending_tickets} pending
+              <Badge variant="warning" className="gap-1">
+                <Bell className="size-3" aria-hidden />
+                {s.pending_tickets} pendientes
               </Badge>
             )}
             {s.bill_requested && (
               <Badge variant="destructive" className="gap-1">
-                <Receipt className="size-3" />
+                <Receipt className="size-3" aria-hidden />
                 Pidieron cuenta
               </Badge>
             )}

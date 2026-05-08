@@ -32,9 +32,10 @@ export default async function SessionDetailPage({
   const items = await listTicketItemsForTickets(tickets.map((t) => t.id))
 
   return (
-    <main className="space-y-6 py-6">
+    <div className="space-y-6">
       <PageHeader
-        title={`${session.table_label ?? 'Mesa'} — sesión`}
+        eyebrow="Salón · Mesa"
+        title={session.table_label ?? 'Mesa'}
         description={`Total acumulado: $${(session.total_cents / 100).toFixed(2)}`}
       />
       <SessionDetail
@@ -43,6 +44,6 @@ export default async function SessionDetailPage({
         initialTickets={tickets}
         initialItems={items}
       />
-    </main>
+    </div>
   )
 }

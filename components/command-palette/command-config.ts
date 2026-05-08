@@ -89,7 +89,7 @@ export const commandEntries: CommandEntry[] = [
     icon: ClipboardList,
     group: 'Operación',
     type: 'navigate',
-    href: (s) => `/${s}/sesiones`,
+    href: (s) => `/${s}/salon/mesas`,
     keywords: ['mesas', 'sesiones', 'salón', 'live'],
   },
   {
@@ -98,7 +98,7 @@ export const commandEntries: CommandEntry[] = [
     icon: ChefHat,
     group: 'Operación',
     type: 'navigate',
-    href: (s) => `/${s}/cocina`,
+    href: (s) => `/${s}/salon/cocina`,
     keywords: ['kitchen', 'tickets', 'pedidos'],
   },
   {

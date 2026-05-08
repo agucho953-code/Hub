@@ -56,6 +56,27 @@ const nextConfig: NextConfig = {
         destination: '/:slug/punch-cards/:rest*',
         permanent: true,
       },
+      // Salón: sesiones y cocina migraron al workspace de salón
+      {
+        source: '/:slug/sesiones',
+        destination: '/:slug/salon/mesas',
+        permanent: true,
+      },
+      {
+        source: '/:slug/sesiones/:rest*',
+        destination: '/:slug/salon/mesas/:rest*',
+        permanent: true,
+      },
+      {
+        source: '/:slug/cocina',
+        destination: '/:slug/salon/cocina',
+        permanent: true,
+      },
+      {
+        source: '/:slug/cocina/:rest*',
+        destination: '/:slug/salon/cocina/:rest*',
+        permanent: true,
+      },
       // Visitas global → CRM de clientes (sin job-to-be-done propio en el nav)
       {
         source: '/:slug/visitas',

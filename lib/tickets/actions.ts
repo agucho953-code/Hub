@@ -65,8 +65,8 @@ export async function acceptTicket(slug: string, ticketId: string): Promise<Tick
     console.error('[tickets.accept]', error.message)
     return { ok: false, message: 'No se pudo aceptar la comanda.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/cocina`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/cocina`)
   return {
     ok: true,
     ticketId: parsed.data.ticket_id,
@@ -100,7 +100,7 @@ export async function rejectTicket(
     console.error('[tickets.reject]', error.message)
     return { ok: false, message: 'No se pudo rechazar.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
+  revalidatePath(`/${slug}/salon/mesas`)
   return { ok: true, ticketId: parsed.data.ticket_id }
 }
 
@@ -130,8 +130,8 @@ export async function updateTicketStatus(
     console.error('[tickets.updateStatus]', error.message)
     return { ok: false, message: 'No se pudo actualizar el estado.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/cocina`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/cocina`)
   return { ok: true, ticketId: parsed.data.ticket_id, status: parsed.data.new_status }
 }
 
@@ -160,8 +160,8 @@ export async function cancelTicketItem(
     console.error('[tickets.cancelItem]', error.message)
     return { ok: false, message: 'No se pudo cancelar el ítem.' }
   }
-  revalidatePath(`/${slug}/sesiones`)
-  revalidatePath(`/${slug}/cocina`)
+  revalidatePath(`/${slug}/salon/mesas`)
+  revalidatePath(`/${slug}/salon/cocina`)
   return { ok: true }
 }
 
@@ -227,6 +227,6 @@ export async function addStaffTicket(
     },
   })
 
-  revalidatePath(`/${slug}/sesiones`)
+  revalidatePath(`/${slug}/salon/mesas`)
   return { ok: true, ticketId: (data as { ticket_id: string }).ticket_id }
 }

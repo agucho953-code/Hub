@@ -1,21 +1,46 @@
-import { ChefHat } from 'lucide-react'
-import { EmptyState } from '@/components/ui/empty-state'
+import { notFound } from 'next/navigation'
 import { PageHeader } from '@/components/ui/page-header'
+import { requireTenantAccess } from '@/lib/tenant'
+import { listKitchenQueue, listTicketItemsForTickets } from '@/lib/tickets/queries'
+import { KdsScreen } from './_components/kds-screen'
 
 export const metadata = { title: 'Salón · Cocina' }
+export const dynamic = 'force-dynamic'
 
-export default async function SalonCocinaPage() {
+export default async function SalonCocinaPage({
+  params,
+}: {
+  params: Promise<{ tenantSlug: string }>
+}) {
+  const { tenantSlug } = await params
+
+  let tenantId: string
+  let role: string
+  try {
+    const access = await requireTenantAccess(tenantSlug)
+    tenantId = access.tenant.id
+    role = access.role
+  } catch {
+    notFound()
+  }
+
+  if (!['kitchen', 'owner', 'cashier'].includes(role)) notFound()
+
+  const tickets = await listKitchenQueue(tenantId)
+  const items = await listTicketItemsForTickets(tickets.map((t) => t.id))
+
   return (
     <div className="space-y-6">
       <PageHeader
         eyebrow="Salón"
         title="Cocina"
-        description="Tickets activos en cola. Empezar, listo o marcar sin stock."
+        description="Tickets activos en orden de antigüedad."
       />
-      <EmptyState
-        icon={ChefHat}
-        title="Próximamente"
-        description="El KDS mobile aterriza en el próximo commit. Por ahora podés ver la cocina desde /cocina con el dashboard viejo."
+      <KdsScreen
+        tenantSlug={tenantSlug}
+        tenantId={tenantId}
+        initialTickets={tickets}
+        initialItems={items}
       />
     </div>
   )
