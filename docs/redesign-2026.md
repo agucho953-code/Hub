@@ -23,6 +23,8 @@ producto, riesgos y mitigaciones) vive en `redesign-2026-plan.md`.
 
 ## Commits
 
+### Fase 1 — Big-bang redesign
+
 | # | Hash | Mensaje |
 |---|---|---|
 | 0 | `7c32105` | `chore(lint): fix pre-existing biome errors blocking pre-commit` |
@@ -34,7 +36,18 @@ producto, riesgos y mitigaciones) vive en `redesign-2026-plan.md`.
 | 6 | `e143e79` | `feat(salon): mesas + cocina con shell mobile + redirects de paths viejos` |
 | 7 | `139c924` | `feat(manager): redesign de pages — NumberTicker en KPIs + eyebrows del nuevo IA` |
 | 8 | `4203fe5` | `feat(auth): rebrand login + email + redirect-by-role en proxy` |
-| 9 | (este) | `chore(docs): design-system + redesign changelog + README` |
+| 9 | `4f160bc` | `chore(docs): design-system + redesign changelog + README` |
+
+### Fase 2 — Backlog cerrado
+
+| # | Hash | Mensaje |
+|---|---|---|
+| 10 | `964b3d8` | `chore(pwa): PNG icons reales (192/512/maskable) + apple-touch-icon` |
+| 11 | `91a64f7` | `feat(auth): pulido visual de forgot/update/accept/onboarding` |
+| 12 | `f926c43` | `feat(auth): updatePasswordAction distingue recovery vs sesión normal` |
+| 13 | `22b295b` | `perf(realtime): optimistic merge en KdsScreen + debounce en SessionsGrid` |
+| 14 | `861e2f0` | `feat(salon): bandeja mobile real con detalle como ruta separada` |
+| 15 | (este) | `chore(docs): cierre de backlog en redesign-2026.md` |
 
 Cada commit pasa `typecheck + lint + test:ci` antes del siguiente
 (husky pre-commit lo enforce).
@@ -112,28 +125,26 @@ Bookmarks viejos siguen vivos via redirects 308 en `next.config.ts`.
 
 ---
 
-## Hallazgos colaterales (BACKLOG)
+## Hallazgos colaterales — cierre
 
-Descubiertos durante el rediseño, **NO resueltos** acá:
+Descubiertos durante la fase 1 y resueltos en la fase 2 (commits 10-15):
 
-1. `SessionsGrid` y `KdsScreen` re-fetchean GET full en cada cambio
-   Realtime (~10 reqs/min con tickets activos). Migrar a optimistic
-   local merge del payload Realtime.
-2. `updatePasswordAction` no diferencia sesión recovery vs normal —
-   un usuario logueado podría cambiarse la pass sin reauth. Riesgo
-   bajo, scope auth review futuro.
+| # | Hallazgo original | Estado | Commit |
+|---|---|---|---|
+| 1 | `SessionsGrid`/`KdsScreen` fetch full en cada Realtime change | ✅ resuelto | `22b295b` (KdsScreen optimistic merge real, SessionsGrid debounced refresh + safety net 30s) |
+| 2 | `updatePasswordAction` no distingue recovery vs normal | ✅ resuelto | `f926c43` (cookie `hub_recovery_flow` 15 min + reauth con currentPassword cuando aplica) |
+| 4 | PNGs reales para PWA icons | ✅ resuelto | `chore(pwa)` (192/512/maskable + apple-touch-icon, generados con sharp desde SVG) |
+| 5 | Bandeja mobile-first es placeholder | ✅ resuelto | `861e2f0` (lista + detalle como rutas separadas, queries movidas a `lib/bandeja`) |
+| 6 | forgot/update/accept/onboarding sin pulido individual | ✅ resuelto | `91a64f7` (BrandWordmarkLarge + h1 serif + cards con border tinted) |
+
+**Aún en BACKLOG** (no bloquean ship, no se resuelven en este rediseño):
+
 3. `tenant-switcher-chip` redirige sin verificar que el slug destino
    corresponde al tenant que activó. Seguro hoy (viene de membership)
    pero conviene loguear.
-4. PNGs reales para PWA icons (192/512/maskable) — actualmente SVG.
-5. Bandeja mobile-first del salón es placeholder. Implementación real
-   pendiente (split pane → stack vertical, lista + detalle como rutas
-   separadas).
-6. `forgot-password`, `update-password`, `accept-invite`, `onboarding`
-   heredan visual del rediseño automáticamente pero no fueron
-   pulidos individualmente.
 7. Cobertura de tests de `lib/theme` es mínima (parser puro). Tests
    de cookie/actions requieren mock de `next/headers` (skipped).
+   Cobertura de optimistic-merge es completa (8 cases, commit 13).
 
 ---
 
@@ -149,11 +160,19 @@ contra `npm run start` con device real / DevTools mobile sim.
 
 Cada commit es auto-contenido (`git checkout` de cualquier hash
 compila + pasa lint/typecheck/tests). Para revertir el redesign
-completo:
+completo (fase 1 + fase 2):
 
 ```bash
-git revert --no-commit 4203fe5..7c32105
+git revert --no-commit 7c32105..HEAD
 git commit -m "revert: redesign 2026 (rollback)"
+```
+
+Para revertir solo la fase 2 (mantener big-bang, descartar el cierre
+de BACKLOG):
+
+```bash
+git revert --no-commit 4f160bc..HEAD
+git commit -m "revert: redesign 2026 fase 2 (rollback backlog cleanup)"
 ```
 
 O simplemente `git reset --hard 20b3db8` si la branch no está
