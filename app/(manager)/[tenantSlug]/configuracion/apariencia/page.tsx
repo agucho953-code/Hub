@@ -9,6 +9,7 @@ import {
   requireTenantAccess,
   TenantNotFoundError,
 } from '@/lib/tenant'
+import { LogoUploader } from './_components/logo-uploader'
 
 export const metadata = { title: 'Apariencia' }
 
@@ -34,27 +35,28 @@ export default async function AparienciaPage({
       <PageHeader
         eyebrow="Configuración · Apariencia"
         title="Apariencia"
-        description="Cómo se ve tu bar dentro de HUB. Algunas opciones llegan pronto."
+        description="Cómo se ve tu bar dentro de HUB."
       />
 
       <Card className="card-hairline gap-4 border-border/70 bg-card/85 p-6">
         <div className="flex items-start gap-3">
-          <div className="flex size-10 items-center justify-center rounded-lg border border-primary/20 bg-[--cream-tint] text-primary">
+          <div className="flex size-10 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-[--cream-tint] text-primary">
             <Type className="size-5" aria-hidden />
           </div>
           <div className="flex-1 space-y-1">
-            <div className="flex items-center gap-2">
-              <h2 className="font-serif text-lg font-semibold tracking-tight">Logo del bar</h2>
-              <Badge variant="muted">Próximamente</Badge>
-            </div>
+            <h2 className="font-serif text-lg font-semibold tracking-tight">Logo del bar</h2>
             <p className="text-sm text-muted-foreground">
-              Subí un logo cuadrado (PNG transparente, mínimo 256×256). Se va a mostrar en el menú
-              público, en los emails y en el QR de mesa.
-            </p>
-            <p className="text-xs text-muted-foreground/80">
-              Tenant actual: <span className="font-mono text-foreground">/{tenantSlug}</span>
+              Aparece arriba del sidebar, en la portada del menú público y en los emails de
+              difusión. Si no subís un logo, mostramos el wordmark HUB!.
             </p>
           </div>
+        </div>
+        <div className="px-1">
+          <LogoUploader
+            tenantSlug={tenantSlug}
+            tenantName={access.tenant.name}
+            initialLogoUrl={access.tenant.logo_url ?? null}
+          />
         </div>
       </Card>
 

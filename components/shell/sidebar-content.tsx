@@ -1,6 +1,5 @@
 import Link from 'next/link'
 import type { Tenant, TenantRole } from '@/lib/tenant/types'
-import { BrandMark, BrandWordmark } from './brand-mark'
 import { resolveNavGroups } from './nav-config'
 import { SidebarNav } from './sidebar-nav'
 
@@ -13,20 +12,30 @@ export function SidebarContent({
   role: TenantRole
   onNavigate?: () => void
 }) {
-  // Resolver server-side: convertir href:function + icon:LucideIcon en datos
-  // serializables para cruzar la frontera RSC sin romper.
   const groups = resolveNavGroups(role, tenant.slug)
 
   return (
     <>
-      <div className="flex items-center gap-2.5 px-4 pt-5 pb-4">
+      <div className="flex items-center justify-center px-4 pt-5 pb-4">
         <Link
           href={`/${tenant.slug}`}
           onClick={onNavigate}
-          className="flex items-center gap-2.5 rounded-md outline-none transition-opacity hover:opacity-80"
+          className="flex items-center justify-center rounded-md outline-none transition-opacity hover:opacity-85 focus-visible:opacity-85"
+          aria-label={`Ir al inicio de ${tenant.name}`}
         >
-          <BrandMark size={32} />
-          <BrandWordmark className="text-base" />
+          {tenant.logo_url ? (
+            // biome-ignore lint/performance/noImgElement: Storage URL externa con cache-buster, Next/Image requiere remotePatterns config global
+            <img
+              src={tenant.logo_url}
+              alt={tenant.name}
+              className="h-14 w-auto max-w-[200px] object-contain"
+            />
+          ) : (
+            <span className="font-serif text-4xl font-semibold leading-none tracking-[-0.045em]">
+              HUB
+              <span className="text-primary">!</span>
+            </span>
+          )}
         </Link>
       </div>
 
