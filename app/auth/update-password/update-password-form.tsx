@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useId, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
-import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
+import { BrandWordmarkLarge } from '@/components/shell/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -59,16 +59,15 @@ export function UpdatePasswordForm({ email }: { email: string }) {
 
   if (state.status === 'success') {
     return (
-      <div className="space-y-6 animate-in fade-in-0 zoom-in-95 duration-300">
-        <div className="flex items-center justify-center gap-2.5">
-          <BrandMark className="size-9" />
-          <BrandWordmark className="text-base" />
+      <div className="space-y-7 animate-in fade-in-0 zoom-in-95 duration-300">
+        <div className="flex justify-center">
+          <BrandWordmarkLarge />
         </div>
-        <div className="card-hairline rounded-2xl border bg-card/90 p-8 text-center shadow-xl backdrop-blur-xl">
-          <div className="mx-auto flex size-12 items-center justify-center rounded-full bg-success/15 text-success">
-            <CheckCircle2 className="size-6" />
+        <div className="card-hairline rounded-2xl border border-border/70 bg-card/90 p-8 text-center shadow-lg backdrop-blur-xl">
+          <div className="mx-auto flex size-14 items-center justify-center rounded-full border border-success/30 bg-success/15 text-success">
+            <CheckCircle2 className="size-7" aria-hidden />
           </div>
-          <h1 className="mt-3 font-display text-lg font-semibold">¡Listo!</h1>
+          <h1 className="mt-4 font-serif text-2xl font-semibold tracking-tight">¡Listo!</h1>
           <p className="mt-1 text-sm text-muted-foreground">Te llevamos a tu panel…</p>
         </div>
       </div>
@@ -78,15 +77,14 @@ export function UpdatePasswordForm({ email }: { email: string }) {
   const strength = pwd.length > 0 ? passwordStrength(pwd) : null
 
   return (
-    <div className="space-y-6 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
-      <div className="flex items-center justify-center gap-2.5">
-        <BrandMark className="size-9" />
-        <BrandWordmark className="text-base" />
+    <div className="space-y-7 animate-in fade-in-0 slide-in-from-bottom-2 duration-500">
+      <div className="flex justify-center">
+        <BrandWordmarkLarge />
       </div>
 
-      <div className="card-hairline rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
-        <div className="space-y-1.5 text-center">
-          <h1 className="font-display text-xl font-semibold tracking-tight">
+      <div className="card-hairline rounded-2xl border border-border/70 bg-card/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
+        <div className="space-y-2 text-center">
+          <h1 className="font-serif text-2xl font-semibold tracking-tight">
             Crear nueva contraseña
           </h1>
           {email ? (

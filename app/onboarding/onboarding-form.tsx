@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useActionState, useEffect, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { toast } from 'sonner'
-import { BrandMark, BrandWordmark } from '@/components/shell/brand-mark'
+import { BrandWordmarkLarge } from '@/components/shell/brand-mark'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -44,21 +44,20 @@ export function OnboardingForm() {
   }, [state, router])
 
   return (
-    <div className="space-y-6">
-      <div className="flex items-center justify-center gap-2.5">
-        <BrandMark className="size-9" />
-        <BrandWordmark className="text-base" />
+    <div className="space-y-7">
+      <div className="flex justify-center">
+        <BrandWordmarkLarge />
       </div>
 
-      <div className="card-hairline relative overflow-hidden rounded-2xl border bg-card/90 p-6 shadow-xl backdrop-blur-xl sm:p-8">
-        <div className="space-y-1.5 text-center">
-          <p className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
-            <Sparkles className="size-3" />
+      <div className="card-hairline relative overflow-hidden rounded-2xl border border-border/70 bg-card/90 p-6 shadow-lg backdrop-blur-xl sm:p-8">
+        <div className="space-y-3 text-center">
+          <p className="inline-flex items-center gap-1.5 rounded-full border border-primary/20 bg-[--cream-tint] px-2.5 py-1 text-[11px] font-semibold uppercase tracking-wider text-primary">
+            <Sparkles className="size-3" aria-hidden />
             Empezá tu bar
           </p>
-          <h1 className="font-display text-2xl font-semibold tracking-tight">Creá tu bar en HUB</h1>
+          <h1 className="font-serif text-3xl font-semibold tracking-tight">Creá tu bar en HUB!</h1>
           <p className="text-sm text-muted-foreground text-balance">
-            Tu nombre y un slug bonito. El resto lo configurás en 5 minutos.
+            Solo necesitamos el nombre. El resto lo configurás en 5 minutos.
           </p>
         </div>
 
